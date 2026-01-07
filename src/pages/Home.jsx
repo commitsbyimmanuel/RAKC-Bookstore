@@ -1,7 +1,15 @@
+import { useState } from "react";
 import BookShelf from "../ui/BookShelf";
 import Button from "../ui/Button";
+import CheckAvailability from "../ui/CheckAvailability";
+import BookRequests from "../ui/BookRequests";
+import { useNavigate } from "react-router-dom";
 
 export default function Home() {
+  const [showAvailability, setShowAvailability] = useState(false);
+  const [showBookRequests, setShowBookRequests] = useState(false);
+  const navigate = useNavigate();
+
   return (
     <div className="grid gap-5 md:grid-cols-3">
       <section className="md:col-span-2 h-[380px] rounded-2xl border border-white/20 bg-white/5 p-4 backdrop-blur">
@@ -11,12 +19,29 @@ export default function Home() {
         <BookShelf />
       </section>
 
-      <section className="flex h-[380px] flex-col gap-4">
+      <section className="flex flex-col gap-4">
         <Button>New Sale</Button>
-        <Button>Settle Pending Payment</Button>
-        <Button>Create Book Request</Button>
-        <Button>Check Availability</Button>
+        <Button onClick={() => navigate("/payments?status=Pending")}>Settle Pending Payment</Button>
+        <Button onClick={() => setShowBookRequests(!showBookRequests)}>
+          {showBookRequests ? "Hide Requests" : "Book Requests"}
+        </Button>
+        <Button onClick={() => setShowAvailability(!showAvailability)}>
+          {showAvailability ? "Hide Availability" : "Check Availability"}
+        </Button>
       </section>
+
+      {showBookRequests && (
+        <section className="md:col-span-3">
+          <BookRequests />
+        </section>
+      )}
+
+      {showAvailability && (
+        <section className="md:col-span-3">
+          <CheckAvailability />
+        </section>
+      )}
     </div>
   );
 }
+

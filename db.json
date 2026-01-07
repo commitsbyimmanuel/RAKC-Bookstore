@@ -1,0 +1,180 @@
+{
+  "books": [
+    {
+      "isbn": "9781594485497",
+      "title": "Counterfeit Gods",
+      "authors": ["Timothy Keller"],
+      "coverUrl": "https://covers.openlibrary.org/b/isbn/9781594485497-M.jpg",
+      "stock": 3,
+      "location": "2-3-4"
+    },
+    {
+      "isbn": "9781433544736",
+      "title": "The Things of Earth",
+      "authors": ["Joe Rigney"],
+      "coverUrl": "https://covers.openlibrary.org/b/isbn/9781433544736-M.jpg",
+      "stock": 2,
+      "location": "1-1-1"
+    },
+    {
+      "isbn": "9780735222076",
+      "title": "Rediscovering Jonah: The Secret of God's Mercy",
+      "authors": ["Timothy Keller"],
+      "coverUrl": "https://covers.openlibrary.org/b/isbn/9780735222076-M.jpg",
+      "stock": 1,
+      "location": "1-2-1"
+    },
+    {
+      "isbn": "9781433556272",
+      "title": "Living Life Backward: How Ecclesiastes Teaches Us to Live in Light of the End",
+      "authors": ["David Gibson"],
+      "coverUrl": "https://covers.openlibrary.org/b/isbn/9781433556272-M.jpg",
+      "stock": 2,
+      "location": "1-3-1"
+    },
+    {
+      "isbn": "9780802416735",
+      "title": "Anatomy of an Affair: How Affairs, Attractions, and Addictions Develop, and How to Guard Your Marriage Against Them",
+      "authors": ["Dave Carder"],
+      "coverUrl": "https://covers.openlibrary.org/b/isbn/9780802416735-M.jpg",
+      "stock": 0,
+      "location": "1-6-3"
+    },
+    {
+      "isbn": "9781596387409",
+      "title": "The Doctrines of Grace: Student Edition",
+      "authors": ["Shane Lems"],
+      "coverUrl": "https://books.google.com/books/content?id=5q_vnQEACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "stock": 5,
+      "location": "1-6-4"
+    },
+    {
+      "isbn": "9781433556739",
+      "title": "Redeeming Money: How God Reveals and Reorients Our Hearts",
+      "authors": ["Paul David Tripp"],
+      "description": "Filled with biblical wisdom and aimed at debunking the false promises people often believe about money, this book by best-selling author Paul David Tripp gives a fresh understanding of money through the lens of the gospel.",
+      "publisher": "Crossway",
+      "publishedDate": "2018",
+      "pageCount": 164,
+      "categories": ["Money", "Christianity"],
+      "coverUrl": "https://books.google.com/books/content?id=Z7feswEACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "stock": 5,
+      "location": "1-2-1"
+    },
+    {
+      "isbn": "9781935273868",
+      "title": "What Do You Think of Me? Why Do I Care?",
+      "authors": ["Edward Welch"],
+      "coverUrl": "https://books.google.com/books/content?id=fJ3USAAACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "stock": 1,
+      "location": "1-2-2"
+    },
+    {
+      "isbn": "9781629958071",
+      "title": "When People Are Big and God Is Small",
+      "authors": ["Edward Welch"],
+      "coverUrl": "https://books.google.com/books/content?id=9lWCzwEACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "stock": 0,
+      "location": "1-2-4"
+    },
+    {
+      "isbn": "9781433515002",
+      "title": "What Is the Gospel?",
+      "authors": ["Greg Gilbert"],
+      "coverUrl": "https://covers.openlibrary.org/b/isbn/9781433515002-M.jpg",
+      "location": "1-3-1",
+      "stock": 20
+    },
+    {
+      "isbn": "9781433543463",
+      "title": "Why Trust the Bible?",
+      "authors": ["Greg Gilbert"],
+      "coverUrl": "https://covers.openlibrary.org/b/isbn/9781433543463-M.jpg",
+      "location": "1-3-5",
+      "stock": 10
+    },
+    {
+      "isbn": "9781433543500",
+      "title": "Who Is Jesus?",
+      "authors": ["Greg Gilbert"],
+      "coverUrl": "https://covers.openlibrary.org/b/isbn/9781433543500-M.jpg",
+      "location": "1-3-6",
+      "stock": 15
+    },
+    {
+      "isbn": "9781433587269",
+      "title": "Knowing God",
+      "authors": ["J. I. Packer"],
+      "coverUrl": "https://covers.openlibrary.org/b/isbn/9781433587269-M.jpg",
+      "location": "1-3-4",
+      "stock": 2
+    },
+    {
+      "isbn": "9781922206732",
+      "title": "Then Sings My Soul",
+      "authors": ["Philip Percival"],
+      "coverUrl": "https://m.media-amazon.com/images/I/81nPCeHYsmL.jpg",
+      "location": "1-3-8",
+      "stock": 1
+    }
+  ],
+  "payments": [
+    {
+      "id": 1,
+      "payer": "Temi Cotek",
+      "total_amount": 75,
+      "amount_payed": 50,
+      "status": "Pending"
+    },
+    {
+      "id": 2,
+      "payer": "Blessing Jossy",
+      "total_amount": 110,
+      "amount_payed": 100,
+      "status": "Pending"
+    },
+    {
+      "id": 3,
+      "payer": "Duot Mabil",
+      "total_amount": 65,
+      "amount_payed": 65,
+      "status": "Complete"
+    }
+  ],
+  "bookRequests": [
+    {
+      "id": 1,
+      "isbn": "9780310109402",
+      "title": "The Ruthless Elimination of Hurry",
+      "authors": ["John Mark Comer"],
+      "coverUrl": "https://covers.openlibrary.org/b/isbn/9780310109402-M.jpg",
+      "requesterName": "Sarah Johnson",
+      "fulfilled": false,
+      "requestedAt": "2026-01-05T10:30:00+04:00",
+      "fulfilledAt": null
+    },
+    {
+      "id": 2,
+      "isbn": "9781433561900",
+      "title": "Gentle and Lowly",
+      "authors": ["Dane Ortlund"],
+      "coverUrl": "https://covers.openlibrary.org/b/isbn/9781433561900-M.jpg",
+      "requesterName": "Michael Chen",
+      "fulfilled": false,
+      "requestedAt": "2026-01-06T14:15:00+04:00",
+      "fulfilledAt": null
+    },
+    {
+      "id": 3,
+      "isbn": "9780802418555",
+      "title": "The Prodigal God",
+      "authors": ["Timothy Keller"],
+      "coverUrl": "https://covers.openlibrary.org/b/isbn/9780802418555-M.jpg",
+      "requesterName": "Emily Davis",
+      "fulfilled": true,
+      "requestedAt": "2026-01-03T09:00:00+04:00",
+      "fulfilledAt": "2026-01-04T16:45:00+04:00"
+    }
+  ]
+}
+

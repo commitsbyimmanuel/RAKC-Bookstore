@@ -1,12 +1,16 @@
 export default function BookOnShelf({ book }) {
+  // Support both old and new field names for backwards compatibility
+  const coverUrl = book.coverUrl || book.cover;
+  const title = book.title || book.book_title;
+
   return (
     <div
       key={book.isbn}
       className="relative mx-3 my-[5px] w-[77px] h-[110px] flex-shrink-0 group"
     >
       <img
-        src={book.cover}
-        alt={book.book_title}
+        src={coverUrl}
+        alt={title}
         className="w-full h-full object-cover rounded-sm drop-shadow-[3px_4px_10px_rgba(0,0,0,0.8)]"
       />
 
@@ -20,3 +24,4 @@ export default function BookOnShelf({ book }) {
     </div>
   );
 }
+

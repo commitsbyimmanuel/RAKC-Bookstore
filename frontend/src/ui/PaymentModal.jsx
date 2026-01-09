@@ -49,7 +49,7 @@ export default function PaymentModal({ payment, onClose, onConfirm }) {
 
         <div className="mb-6">
           <label className="mb-2 block text-xs font-medium uppercase tracking-widest text-white/30">
-            Amount to Pay
+            Amount being Paid
           </label>
           <div className="relative">
             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40">AED</span>
@@ -64,7 +64,7 @@ export default function PaymentModal({ payment, onClose, onConfirm }) {
               step="0.01"
               min="0"
               max={pendingAmount}
-              className="w-full rounded-2xl border border-white/10 bg-white/5 py-3 pl-16 pr-4 text-white placeholder:text-white/20 focus:border-white/20 focus:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/10"
+              className="w-full rounded-2xl border border-white/10 bg-white/5 py-3 pl-16 pr-4 text-white placeholder:text-white/20 focus:border-white/20 focus:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/10 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               autoFocus
             />
           </div>

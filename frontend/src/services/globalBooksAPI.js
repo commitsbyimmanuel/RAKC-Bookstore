@@ -1,4 +1,4 @@
-const LOCAL_API_URL = "http://localhost:3001";
+const LOCAL_API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 const GOOGLE_BOOKS_API_URL = "https://www.googleapis.com/books/v1/volumes";
 const OPEN_LIBRARY_API_URL = "https://openlibrary.org/api/books";
 const OPEN_LIBRARY_COVERS_URL = "https://covers.openlibrary.org/b/isbn";

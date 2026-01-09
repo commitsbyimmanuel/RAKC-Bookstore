@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useBookLookup } from "../hooks/useBookLookup";
-import { useCreateSale, useUpdateBookStock } from "../services/localAPI";
+import { useCreatePayment, useCreateSale, useUpdateBookStock } from "../services/localAPI";
 import Button from "../ui/Button";
+import CheckoutModal from "../ui/CheckoutModal";
+
 
 export default function NewSale() {
   const [isbn, setIsbn] = useState("");
@@ -11,6 +13,7 @@ export default function NewSale() {
   const [customerName, setCustomerName] = useState("");
   const [purchaseDate, setPurchaseDate] = useState(new Date());
   const [cart, setCart] = useState([]);
+  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const navigate = useNavigate();
 
   // Update time every minute
@@ -32,6 +35,8 @@ export default function NewSale() {
   const { data: book, isLoading, isError, error } = useBookLookup(searchISBN);
   const updateStockMutation = useUpdateBookStock();
   const createSaleMutation = useCreateSale();
+  const createPaymentMutation = useCreatePayment();
+
 
   // Auto-search when ISBN reaches 13 digits
   useEffect(() => {
@@ -92,14 +97,30 @@ export default function NewSale() {
     setCart(cart.filter(item => item.isbn !== isbnToRm));
   };
 
-  const handleProcessSale = async (e) => {
+  const handleProcessSale = (e) => {
     e.preventDefault();
     if (cart.length === 0) return;
+    
+    // Show checkout modal instead of immediately processing
+    setShowCheckoutModal(true);
+  };
 
+  const handleCheckoutConfirm = async (amountPaid) => {
     try {
       const totalAmount = cart.reduce((sum, item) => sum + (item.price || 0) * item.quantity, 0);
+      
+      // Determine payment status
+      const status = amountPaid >= totalAmount ? "Complete" : "Pending";
+      
+      // 1. Create payment record
+      await createPaymentMutation.mutateAsync({
+        payer: customerName.trim() || "Anonymous",
+        total_amount: totalAmount,
+        amount_payed: amountPaid,
+        status: status,
+      });
 
-      // 1. Record the sale
+      // 2. Record the sale
       await createSaleMutation.mutateAsync({
         items: cart.map(item => ({
           isbn: item.isbn,
@@ -107,12 +128,12 @@ export default function NewSale() {
           quantity: item.quantity,
           unitPrice: item.price
         })),
-        customerName: customerName.trim(),
+        customerName: customerName.trim() || "Anonymous",
         totalAmount: totalAmount,
         purchaseDate: formatDate(purchaseDate),
       });
 
-      // 2. Update stock for each item
+      // 3. Update stock for each item
       for (const item of cart) {
         const newStock = Math.max(0, item.stock - item.quantity);
         await updateStockMutation.mutateAsync({
@@ -121,14 +142,16 @@ export default function NewSale() {
         });
       }
 
-      // 3. Navigate back
+      // 4. Close modal and navigate back
+      setShowCheckoutModal(false);
       navigate("/");
     } catch (err) {
       console.error("Sale processing failed:", err);
     }
   };
 
-  const isProcessing = updateStockMutation.isPending || createSaleMutation.isPending;
+
+  const isProcessing = updateStockMutation.isPending || createSaleMutation.isPending || createPaymentMutation.isPending;
   const totalPrice = cart.reduce((sum, item) => sum + (item.price || 0) * item.quantity, 0);
   const canAddToCart = book && book.source === "local" && book.stock >= quantity && quantity > 0;
 
@@ -383,6 +406,16 @@ export default function NewSale() {
           </div>
         </div>
       </section>
+
+      {/* Checkout Modal */}
+      {showCheckoutModal && (
+        <CheckoutModal
+          totalAmount={totalPrice}
+          customerName={customerName}
+          onClose={() => setShowCheckoutModal(false)}
+          onConfirm={handleCheckoutConfirm}
+        />
+      )}
     </div>
   );
 }

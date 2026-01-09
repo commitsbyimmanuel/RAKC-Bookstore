@@ -325,5 +325,38 @@ export function useCreateBookRequest() {
   });
 }
 
+/**
+ * Create a new payment record
+ * @param {Object} paymentData - The payment data (payer, total_amount, amount_payed, status)
+ */
+export async function createPayment(paymentData) {
+  const response = await fetch(`${LOCAL_API_URL}/payments`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(paymentData),
+  });
+  if (!response.ok) {
+    throw new Error("Failed to create payment");
+  }
+  return response.json();
+}
+
+/**
+ * Hook to create a new payment
+ */
+export function useCreatePayment() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: createPayment,
+    onSuccess: () => {
+      // Invalidate payments queries to refetch the list
+      queryClient.invalidateQueries({ queryKey: ["payments"] });
+    },
+  });
+}
+
 export { fetchAllBooks as default };
 

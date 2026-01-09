@@ -239,6 +239,19 @@
       "fulfilled": true,
       "requestedAt": "2026-01-03T09:00:00+04:00",
       "fulfilledAt": "2026-01-04T16:45:00+04:00"
+    },
+    {
+      "id": "b90b",
+      "isbn": "9780441478125",
+      "title": "The Left Hand of Darkness",
+      "authors": [
+        "Ursula K. Le Guin"
+      ],
+      "coverUrl": "https://books.google.com/books/content?id=9B11qVO16OIC&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "requesterName": "John Doe",
+      "fulfilled": true,
+      "requestedAt": "2026-01-09T13:38:41.776Z",
+      "fulfilledAt": "2026-01-09T13:38:45.968Z"
     }
   ],
   "sales": [

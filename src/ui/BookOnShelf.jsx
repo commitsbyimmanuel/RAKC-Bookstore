@@ -15,7 +15,7 @@ export default function BookOnShelf({ book }) {
       />
 
       {/* Tooltip */}
-      <div className="absolute bottom-full left-1/2 mb-2 w-max -translate-x-1/2 rounded-md bg-gray-900 px-3 py-2 text-xs text-white opacity-0 pointer-events-none transition-opacity duration-200 group-hover:opacity-100 z-10">
+      <div className="absolute bottom-full left-1/2 mb-2 w-max -translate-x-1/2 rounded-md bg-gray-900 px-3 py-2 text-xs text-white opacity-0 pointer-events-none transition-opacity duration-200 group-hover:opacity-100 z-50">
         <p className="font-semibold">{`In Stock: ${book.stock}`}</p>
         {book.location && (
           <p className="text-gray-400 text-[10px]">📍 {book.location}</p>

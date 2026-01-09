@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useBookLookup } from "../hooks/useBookLookup";
 import { useCreateBookRequest } from "../services/localAPI";
 
@@ -34,11 +35,12 @@ function AddRequestModal({ book, isOpen, onClose, onSubmit, isSubmitting }) {
     }
   };
 
-  return (
+  // Use portal to render at document.body for full-screen blur effect
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Apple Vision style blurred backdrop */}
       <div 
-        className="absolute inset-0 bg-black/40 backdrop-blur-xl"
+        className="absolute inset-0 bg-black/10 backdrop-blur-[2px]"
         onClick={onClose}
       />
       
@@ -46,7 +48,7 @@ function AddRequestModal({ book, isOpen, onClose, onSubmit, isSubmitting }) {
       <div className="relative z-10 w-full max-w-md mx-4 p-6 rounded-3xl 
                       bg-white/10 backdrop-blur-2xl border border-white/20
                       shadow-2xl">
-        <h2 className="text-xl font-semibold mb-4">Add Book Request</h2>
+        <h2 className="text-xl font-semibold text-white mb-4">Add Book Request</h2>
         
         {/* Book preview */}
         <div className="flex gap-4 mb-6 p-4 rounded-xl bg-white/5">
@@ -58,7 +60,7 @@ function AddRequestModal({ book, isOpen, onClose, onSubmit, isSubmitting }) {
             />
           )}
           <div className="flex-1">
-            <h3 className="font-medium">{book.title}</h3>
+            <h3 className="font-medium text-white">{book.title}</h3>
             <p className="text-sm text-white/60">{book.authors?.join(", ")}</p>
             <p className="text-xs text-white/40 mt-1">ISBN: {book.isbn}</p>
           </div>
@@ -73,7 +75,7 @@ function AddRequestModal({ book, isOpen, onClose, onSubmit, isSubmitting }) {
             value={requesterName}
             onChange={(e) => setRequesterName(e.target.value)}
             placeholder="Enter name..."
-            className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 
+            className="w-full text-white bg-white/10 border border-white/20 rounded-xl px-4 py-3 
                        placeholder:text-white/40 focus:outline-none focus:ring-2 
                        focus:ring-white/30 transition-all mb-6"
             autoFocus
@@ -84,16 +86,16 @@ function AddRequestModal({ book, isOpen, onClose, onSubmit, isSubmitting }) {
               type="button"
               onClick={onClose}
               className="flex-1 px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 
-                         transition-all active:scale-95 font-medium"
+                         transition-all text-white hover:text-white/80 active:scale-95 font-medium"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={!requesterName.trim() || isSubmitting}
-              className="flex-1 px-4 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 
-                         disabled:bg-purple-600/50 disabled:cursor-not-allowed
-                         transition-all active:scale-95 font-medium"
+              className="flex-1 px-4 py-3 rounded-xl bg-orange-700 hover:bg-orange-600 
+                         disabled:bg-orange-900/50 disabled:cursor-not-allowed
+                         transition-all text-white hover:text-white/80 active:scale-95 font-medium"
             >
               {isSubmitting ? (
                 <span className="flex items-center justify-center gap-2">
@@ -107,12 +109,14 @@ function AddRequestModal({ book, isOpen, onClose, onSubmit, isSubmitting }) {
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
 function BookCard({ book, onAddRequest }) {
-  const showAddRequest = book.source === "local" && book.stock === 0;
+  // Show Add Request for: out of stock local books OR books not in local inventory
+  const showAddRequest = (book.source === "local" && book.stock === 0) || book.source !== "local";
 
   return (
     <div className="flex gap-4 p-4 rounded-xl bg-white/5 border border-white/10">
@@ -159,7 +163,13 @@ function BookCard({ book, onAddRequest }) {
           </div>
         )}
 
-        {/* Add Request button for out of stock books */}
+        {book.source !== "local" && (
+          <p className="mt-3 text-sm text-amber-400">
+            ⚠️ Not in local inventory
+          </p>
+        )}
+
+        {/* Add Request button for out of stock or not in inventory */}
         {showAddRequest && (
           <button
             onClick={onAddRequest}
@@ -168,12 +178,6 @@ function BookCard({ book, onAddRequest }) {
           >
             📝 Add Request
           </button>
-        )}
-
-        {book.source !== "local" && (
-          <p className="mt-3 text-sm text-amber-400">
-            ⚠️ Not in local inventory
-          </p>
         )}
       </div>
     </div>

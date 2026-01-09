@@ -1,9 +1,9 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import BookRequests from "../ui/BookRequests";
 import BookShelf from "../ui/BookShelf";
 import Button from "../ui/Button";
 import CheckAvailability from "../ui/CheckAvailability";
-import BookRequests from "../ui/BookRequests";
-import { useNavigate } from "react-router-dom";
 
 export default function Home() {
   const [showAvailability, setShowAvailability] = useState(false);
@@ -20,7 +20,7 @@ export default function Home() {
       </section>
 
       <section className="flex flex-col gap-4">
-        <Button>New Sale</Button>
+        <Button onClick={() => navigate("/new-sale")}>New Sale</Button>
         <Button onClick={() => navigate("/payments?status=Pending")}>Settle Pending Payment</Button>
         <Button onClick={() => setShowBookRequests(!showBookRequests)}>
           {showBookRequests ? "Hide Requests" : "Book Requests"}
@@ -30,17 +30,17 @@ export default function Home() {
         </Button>
       </section>
 
+      {showAvailability && (
+        <section className="md:col-span-3">
+          <CheckAvailability />
+        </section>
+      )}
       {showBookRequests && (
         <section className="md:col-span-3">
           <BookRequests />
         </section>
       )}
 
-      {showAvailability && (
-        <section className="md:col-span-3">
-          <CheckAvailability />
-        </section>
-      )}
     </div>
   );
 }

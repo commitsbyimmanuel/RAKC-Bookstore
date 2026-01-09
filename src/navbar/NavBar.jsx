@@ -8,7 +8,7 @@ export default function NavBar() {
   const currentPage = currentPathNormalized ? currentPathNormalized : "home";
 
   return (
-    <header className="mx-auto w-full rounded-2xl border border-white/20 bg-black/50 p-3 shadow-2xl backdrop-blur-xl">
+    <header className="relative z-20 mx-auto w-full rounded-2xl border border-white/20 bg-black/50 p-3 shadow-2xl backdrop-blur-xl">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="h-10 w-9 rounded-xl">

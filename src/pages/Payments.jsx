@@ -1,12 +1,16 @@
+import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { usePayments } from "../services/localAPI";
+import { usePayments, useUpdatePayment } from "../services/localAPI";
+import PaymentModal from "../ui/PaymentModal";
 
 export default function Payments() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const [selectedPayment, setSelectedPayment] = useState(null);
   const statusFilter = searchParams.get("status"); // "Pending", "Complete", or null (all)
 
   // Fetch all payments (we filter client-side for tab counts)
   const { data: allPayments = [], isLoading, isError } = usePayments();
+  const updatePaymentMutation = useUpdatePayment();
 
   // Filter payments based on status query param
   const filteredPayments = statusFilter
@@ -18,6 +22,25 @@ export default function Payments() {
       setSearchParams({ status });
     } else {
       setSearchParams({});
+    }
+  };
+
+  const handlePaymentConfirm = async (amount) => {
+    if (!selectedPayment) return;
+    
+    const newAmountPayed = selectedPayment.amount_payed + amount;
+    const pendingAmount = selectedPayment.total_amount - newAmountPayed;
+    const newStatus = pendingAmount <= 0 ? "Complete" : "Pending";
+    
+    try {
+      await updatePaymentMutation.mutateAsync({
+        id: selectedPayment.id,
+        amount_payed: newAmountPayed,
+        status: newStatus,
+      });
+      setSelectedPayment(null);
+    } catch (err) {
+      console.error("Failed to update payment:", err);
     }
   };
 
@@ -99,7 +122,8 @@ export default function Payments() {
         {filteredPayments.map((entry) => (
           <div
             key={entry.id}
-            className="py-5 items-center flex justify-between"
+            onClick={() => setSelectedPayment(entry)}
+            className="py-5 items-center flex justify-between cursor-pointer hover:bg-white/5 rounded-2xl px-4 transition-all"
           >
             <div className="flex-col">
               <div className="text-lg">{entry.payer}</div>
@@ -119,6 +143,14 @@ export default function Payments() {
           </div>
         ))}
       </div>
+      
+      {selectedPayment && (
+        <PaymentModal
+          payment={selectedPayment}
+          onClose={() => setSelectedPayment(null)}
+          onConfirm={handlePaymentConfirm}
+        />
+      )}
     </div>
   );
 }

@@ -105,7 +105,7 @@ export default function BookShelf() {
   return (
     <div className="flex flex-wrap h-[300px] items-start justify-start py-3 px-2 rounded-xl bg-black/30 overflow-y-auto scrollbar-hide">
       {bestSellers.map((book) => (
-        <BookOnShelf book={book} />
+        <BookOnShelf book={book} key={book.isbn} />
       ))}
     </div>
   );

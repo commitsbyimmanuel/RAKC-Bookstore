@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 const LOCAL_API_URL = "http://localhost:3001";
 
@@ -130,6 +130,184 @@ export async function createBookRequest(requestData) {
     throw new Error("Failed to create book request");
   }
   return response.json();
+}
+
+/**
+ * Update book stock in local json-server
+ * @param {string} id - The book's internal ID (not ISBN)
+ * @param {number} newStock - The new stock count
+ */
+export async function updateBookStock(id, newStock) {
+  const response = await fetch(`${LOCAL_API_URL}/books/${id}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      stock: newStock,
+    }),
+  });
+  if (!response.ok) {
+    throw new Error("Failed to update book stock");
+  }
+  return response.json();
+}
+
+/**
+ * Hook to update book stock
+ */
+export function useUpdateBookStock() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ id, newStock }) => updateBookStock(id, newStock),
+    onSuccess: () => {
+      // Invalidate books and specific book queries
+      queryClient.invalidateQueries({ queryKey: ["books"] });
+      queryClient.invalidateQueries({ queryKey: ["book"] });
+    },
+  });
+}
+
+/**
+ * Update book details in local json-server
+ * @param {string} id - The book's internal ID
+ * @param {Object} updateData - Data to update (stock, location, etc.)
+ */
+export async function updateBook(id, updateData) {
+  const response = await fetch(`${LOCAL_API_URL}/books/${id}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(updateData),
+  });
+  if (!response.ok) {
+    throw new Error("Failed to update book");
+  }
+  return response.json();
+}
+
+/**
+ * Hook to update book details
+ */
+export function useUpdateBook() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ id, ...updateData }) => updateBook(id, updateData),
+    onSuccess: () => {
+      // Invalidate both the books list and individual book queries
+      queryClient.invalidateQueries({ queryKey: ["books"] });
+      queryClient.invalidateQueries({ queryKey: ["book"] });
+    },
+  });
+}
+
+/**
+ * Update payment details in local json-server
+ * @param {string} id - The payment ID
+ * @param {Object} updateData - Data to update (amount_payed, status, etc.)
+ */
+export async function updatePayment(id, updateData) {
+  const response = await fetch(`${LOCAL_API_URL}/payments/${id}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(updateData),
+  });
+  if (!response.ok) {
+    throw new Error("Failed to update payment");
+  }
+  return response.json();
+}
+
+/**
+ * Hook to update payment
+ */
+export function useUpdatePayment() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ id, ...updateData }) => updatePayment(id, updateData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["payments"] });
+    },
+  });
+}
+
+
+
+
+/**
+ * Add a new book to local json-server
+ * @param {Object} bookData - The book data (isbn, title, authors, stock, location, etc.)
+ */
+export async function addBook(bookData) {
+  const response = await fetch(`${LOCAL_API_URL}/books`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(bookData),
+  });
+  if (!response.ok) {
+    throw new Error("Failed to add book");
+  }
+  return response.json();
+}
+
+/**
+ * Hook to add a new book
+ */
+export function useAddBook() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: addBook,
+    onSuccess: () => {
+      // Invalidate books queries to refetch the list
+      queryClient.invalidateQueries({ queryKey: ["books"] });
+    },
+  });
+}
+
+
+/**
+ * Create a new sale record
+ * @param {Object} saleData - The sale data (isbn, quantity, customerName, etc.)
+ */
+export async function createSale(saleData) {
+  const response = await fetch(`${LOCAL_API_URL}/sales`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      ...saleData,
+      soldAt: new Date().toISOString(),
+    }),
+  });
+  if (!response.ok) {
+    throw new Error("Failed to record sale");
+  }
+  return response.json();
+}
+
+/**
+ * Hook to create a new sale
+ */
+export function useCreateSale() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: createSale,
+    onSuccess: () => {
+      // Invalidate sales if we ever display them
+      queryClient.invalidateQueries({ queryKey: ["sales"] });
+    },
+  });
 }
 
 /**

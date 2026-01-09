@@ -9,6 +9,7 @@
       "coverUrl": "https://covers.openlibrary.org/b/isbn/9781594485497-M.jpg",
       "stock": 3,
       "location": "2-3-4",
+      "price": 45,
       "id": "6ad5"
     },
     {
@@ -20,6 +21,7 @@
       "coverUrl": "https://covers.openlibrary.org/b/isbn/9781433544736-M.jpg",
       "stock": 2,
       "location": "1-1-1",
+      "price": 35,
       "id": "319c"
     },
     {
@@ -31,6 +33,7 @@
       "coverUrl": "https://covers.openlibrary.org/b/isbn/9780735222076-M.jpg",
       "stock": 1,
       "location": "1-2-1",
+      "price": 50,
       "id": "9d32"
     },
     {
@@ -40,8 +43,9 @@
         "David Gibson"
       ],
       "coverUrl": "https://covers.openlibrary.org/b/isbn/9781433556272-M.jpg",
-      "stock": 2,
+      "stock": 10,
       "location": "1-3-1",
+      "price": 40,
       "id": "80f1"
     },
     {
@@ -53,6 +57,7 @@
       "coverUrl": "https://covers.openlibrary.org/b/isbn/9780802416735-M.jpg",
       "stock": 0,
       "location": "1-6-3",
+      "price": 25,
       "id": "9d11"
     },
     {
@@ -64,6 +69,7 @@
       "coverUrl": "https://books.google.com/books/content?id=5q_vnQEACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
       "stock": 5,
       "location": "1-6-4",
+      "price": 30,
       "id": "79fa"
     },
     {
@@ -83,6 +89,7 @@
       "coverUrl": "https://books.google.com/books/content?id=Z7feswEACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
       "stock": 5,
       "location": "1-2-1",
+      "price": 42,
       "id": "e1c2"
     },
     {
@@ -94,6 +101,7 @@
       "coverUrl": "https://books.google.com/books/content?id=fJ3USAAACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
       "stock": 1,
       "location": "1-2-2",
+      "price": 20,
       "id": "ca1f"
     },
     {
@@ -105,6 +113,7 @@
       "coverUrl": "https://books.google.com/books/content?id=9lWCzwEACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
       "stock": 0,
       "location": "1-2-4",
+      "price": 38,
       "id": "a9de"
     },
     {
@@ -116,6 +125,7 @@
       "coverUrl": "https://covers.openlibrary.org/b/isbn/9781433515002-M.jpg",
       "location": "1-3-1",
       "stock": 20,
+      "price": 15,
       "id": "1a59"
     },
     {
@@ -127,6 +137,7 @@
       "coverUrl": "https://covers.openlibrary.org/b/isbn/9781433543463-M.jpg",
       "location": "1-3-5",
       "stock": 10,
+      "price": 15,
       "id": "ac13"
     },
     {
@@ -138,6 +149,7 @@
       "coverUrl": "https://covers.openlibrary.org/b/isbn/9781433543500-M.jpg",
       "location": "1-3-6",
       "stock": 15,
+      "price": 15,
       "id": "7e36"
     },
     {
@@ -149,6 +161,7 @@
       "coverUrl": "https://covers.openlibrary.org/b/isbn/9781433587269-M.jpg",
       "location": "1-3-4",
       "stock": 2,
+      "price": 55,
       "id": "7e6d"
     },
     {
@@ -160,6 +173,7 @@
       "coverUrl": "https://m.media-amazon.com/images/I/81nPCeHYsmL.jpg",
       "location": "1-3-8",
       "stock": 1,
+      "price": 28,
       "id": "afd6"
     }
   ],
@@ -168,8 +182,8 @@
       "id": "1",
       "payer": "Temi Cotek",
       "total_amount": 75,
-      "amount_payed": 50,
-      "status": "Pending"
+      "amount_payed": 75,
+      "status": "Complete"
     },
     {
       "id": "2",
@@ -225,6 +239,23 @@
       "fulfilled": true,
       "requestedAt": "2026-01-03T09:00:00+04:00",
       "fulfilledAt": "2026-01-04T16:45:00+04:00"
+    }
+  ],
+  "sales": [
+    {
+      "id": "2b6e",
+      "items": [
+        {
+          "isbn": "9781433556272",
+          "title": "Living Life Backward: How Ecclesiastes Teaches Us to Live in Light of the End",
+          "quantity": 1,
+          "unitPrice": 40
+        }
+      ],
+      "customerName": "Tester",
+      "totalAmount": 40,
+      "purchaseDate": "Jan 09, 2026 12:42",
+      "soldAt": "2026-01-09T08:42:39.376Z"
     }
   ]
 }

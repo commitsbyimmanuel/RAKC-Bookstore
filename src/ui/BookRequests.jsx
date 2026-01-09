@@ -87,7 +87,7 @@ export default function BookRequests() {
         <h3 className="text-sm text-white/80 mb-3">Book Requests</h3>
         <div className="flex justify-center items-center h-32">
           <div className="text-center text-red-400">
-            Failed to load requests. Make sure json-server is running.
+            Failed to load requests. Unable to reach backend.
           </div>
         </div>
       </div>

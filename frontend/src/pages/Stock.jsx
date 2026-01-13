@@ -10,6 +10,7 @@ export default function Stock() {
   const [quantity, setQuantity] = useState(1);
   const [location, setLocation] = useState("");
   const [locationError, setLocationError] = useState("");
+  const [price, setPrice] = useState("");
   const [page, setPage] = useState(1);
   const [highlightedISBN, setHighlightedISBN] = useState(null);
   
@@ -34,9 +35,11 @@ export default function Stock() {
     if (book && book.source === "local") {
       setQuantity(book.stock || 0);
       setLocation(book.location || "");
+      setPrice(book.price?.toString() || "");
     } else {
       setQuantity(1);
       setLocation("");
+      setPrice("");
     }
     setLocationError("");
   }, [book]);
@@ -96,7 +99,7 @@ export default function Stock() {
         coverUrl: book.coverUrl,
         stock: quantity,
         location: location.toUpperCase(),
-        price: 0, // Default price, can be updated later
+        price: parseFloat(price) || 0,
       });
       
       // Reset form
@@ -104,6 +107,7 @@ export default function Stock() {
       setSearchISBN("");
       setQuantity(1);
       setLocation("");
+      setPrice("");
     } catch (err) {
       console.error("Failed to add book:", err);
     }
@@ -126,6 +130,7 @@ export default function Stock() {
         id: book.id,
         stock: updatedStock,
         location: location.toUpperCase(),
+        price: parseFloat(price) || book.price || 0,
       });
       
       // Highlight the book in the list
@@ -138,6 +143,7 @@ export default function Stock() {
       setQuantity(1);
       setLocation("");
       setLocationError("");
+      setPrice("");
     } catch (err) {
       console.error("Failed to update stock:", err);
     }
@@ -259,7 +265,7 @@ export default function Stock() {
                 )}
 
                 {/* Location Input */}
-                <div className="col-span-2">
+                <div>
                   <label className="block text-xs font-medium text-white/30 uppercase tracking-widest mb-2">
                     Location
                   </label>
@@ -270,7 +276,7 @@ export default function Stock() {
                       setLocation(e.target.value);
                       setLocationError("");
                     }}
-                    placeholder="X-X-X (e.g. A-1-5)"
+                    placeholder="X-X-X"
                     className={`w-full bg-white/5 border rounded-2xl px-4 h-[46px] text-white placeholder:text-white/20 focus:outline-none focus:ring-2 transition-all shadow-inner ${
                       locationError ? 'border-red-500 focus:ring-red-500/20' : 'border-white/10 focus:ring-white/10 focus:bg-white/10'
                     }`}
@@ -278,6 +284,25 @@ export default function Stock() {
                   {locationError && (
                     <p className="text-[10px] text-red-400 mt-1 uppercase tracking-tight">{locationError}</p>
                   )}
+                </div>
+
+                {/* Price Input */}
+                <div>
+                  <label className="block text-xs font-medium text-white/30 uppercase tracking-widest mb-2">
+                    Price
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 text-sm">AED</span>
+                    <input
+                      type="number"
+                      value={price}
+                      onChange={(e) => setPrice(e.target.value)}
+                      placeholder="0.00"
+                      step="0.01"
+                      min="0"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl pl-14 pr-4 h-[46px] text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-white/10 focus:bg-white/10 transition-all shadow-inner [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    />
+                  </div>
                 </div>
 
                 

@@ -267,8 +267,9 @@ export function useAddBook() {
   return useMutation({
     mutationFn: addBook,
     onSuccess: () => {
-      // Invalidate books queries to refetch the list
+      // Invalidate both the books list and individual book lookups
       queryClient.invalidateQueries({ queryKey: ["books"] });
+      queryClient.invalidateQueries({ queryKey: ["book"] });
     },
   });
 }

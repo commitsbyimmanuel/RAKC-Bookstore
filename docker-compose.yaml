@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:7.0
+    container_name: rakc-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      - MONGO_INITDB_DATABASE=Bookstore
+    networks:
+      - rakc-network
+
+  # Backend API Service
+  backend:
+    image: ghcr.io/commitsbyimmanuel/rakc-bookstore-backend:v1.0.0
+    container_name: rakc-backend
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/Bookstore
+      - PORT=3001
+    depends_on:
+      - mongodb
+    networks:
+      - rakc-network
+
+  # Frontend Web Application
+  frontend:
+    image: ghcr.io/commitsbyimmanuel/rakc-bookstore-frontend:v0.0.9
+    container_name: rakc-frontend
+    restart: unless-stopped
+    environment:
+      - VITE_API_URL=http://localhost:3001
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - rakc-network
+
+volumes:
+  mongodb_data:
+    driver: local
+
+networks:
+  rakc-network:
+    driver: bridge

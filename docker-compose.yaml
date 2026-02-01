@@ -32,7 +32,7 @@ services:
 
   # Frontend Web Application
   frontend:
-    image: ghcr.io/commitsbyimmanuel/rakc-bookstore-frontend:v0.0.9
+    image: ghcr.io/commitsbyimmanuel/rakc-bookstore-frontend:v1.0.0
     container_name: rakc-frontend
     restart: unless-stopped
     environment:

@@ -305,9 +305,33 @@ export function useCreateSale() {
   return useMutation({
     mutationFn: createSale,
     onSuccess: () => {
-      // Invalidate sales if we ever display them
+      // Invalidate sales and top sellers when a new sale is created
       queryClient.invalidateQueries({ queryKey: ["sales"] });
+      queryClient.invalidateQueries({ queryKey: ["topSellers"] });
     },
+  });
+}
+
+/**
+ * Fetch top selling books based on sales data
+ * @param {number} limit - Number of top sellers to return (default 14)
+ */
+export async function fetchTopSellers(limit = 14) {
+  const response = await fetch(`${LOCAL_API_URL}/sales/top-sellers?limit=${limit}`);
+  if (!response.ok) {
+    throw new Error("Failed to fetch top sellers");
+  }
+  return response.json();
+}
+
+/**
+ * Hook to fetch top selling books
+ */
+export function useTopSellers(limit = 14) {
+  return useQuery({
+    queryKey: ["topSellers", limit],
+    queryFn: () => fetchTopSellers(limit),
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });
 }
 

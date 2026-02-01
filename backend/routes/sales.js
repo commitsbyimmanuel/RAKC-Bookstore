@@ -1,7 +1,69 @@
 import express from 'express';
+import Book from '../models/Book.js';
 import Sale from '../models/Sale.js';
 
 const router = express.Router();
+
+// GET top sellers (aggregated from sales data)
+router.get('/top-sellers', async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 14;
+    
+    // Aggregate sales to get total quantity sold per ISBN
+    const topSellersData = await Sale.aggregate([
+      // Unwind the items array to process each item separately
+      { $unwind: '$items' },
+      
+      // Group by ISBN and sum quantities
+      {
+        $group: {
+          _id: '$items.isbn',
+          totalSold: { $sum: '$items.quantity' }
+        }
+      },
+      
+      // Sort by total sold (descending)
+      { $sort: { totalSold: -1 } },
+      
+      // Limit to requested number
+      { $limit: limit }
+    ]);
+    
+    // Get ISBNs of top sellers
+    const topISBNs = topSellersData.map(item => item._id);
+    
+    // Fetch book details for these ISBNs from the Books collection
+    const books = await Book.find({ isbn: { $in: topISBNs } });
+    
+    // Create a map of ISBN to book details
+    const booksMap = {};
+    books.forEach(book => {
+      booksMap[book.isbn] = book;
+    });
+    
+    // Combine sales data with book details, maintaining sort order
+    const topSellers = topSellersData
+      .map(item => {
+        const book = booksMap[item._id];
+        if (!book) return null;
+        
+        return {
+          isbn: item._id,
+          totalSold: item.totalSold,
+          title: book.title,
+          authors: book.authors,
+          coverUrl: book.coverUrl,
+          price: book.price,
+          stock: book.stock
+        };
+      })
+      .filter(item => item !== null); // Remove any books not found in inventory
+    
+    res.json(topSellers);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // GET all sales (with optional query filters)
 router.get('/', async (req, res) => {

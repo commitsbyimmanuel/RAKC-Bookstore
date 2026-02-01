@@ -7,22 +7,42 @@ export default function Payments() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedPayment, setSelectedPayment] = useState(null);
   const statusFilter = searchParams.get("status"); // "Pending", "Complete", or null (all)
+  const paymentMethodFilter = searchParams.get("method"); // "Cash", "Bank Transfer", or null (all)
 
   // Fetch all payments (we filter client-side for tab counts)
   const { data: allPayments = [], isLoading, isError } = usePayments();
   const updatePaymentMutation = useUpdatePayment();
 
-  // Filter payments based on status query param
-  const filteredPayments = statusFilter
-    ? allPayments.filter((p) => p.status === statusFilter)
-    : allPayments;
+  // Filter payments based on status and payment method query params
+  const filteredPayments = allPayments.filter((p) => {
+    const matchesStatus = !statusFilter || p.status === statusFilter;
+    const matchesMethod = !paymentMethodFilter || p.payment_method === paymentMethodFilter;
+    return matchesStatus && matchesMethod;
+  });
 
-  const handleFilterChange = (status) => {
-    if (status) {
-      setSearchParams({ status });
-    } else {
-      setSearchParams({});
+  const handleFilterChange = (filterType, value) => {
+    const newParams = {};
+    
+    // Preserve existing filters
+    if (statusFilter) newParams.status = statusFilter;
+    if (paymentMethodFilter) newParams.method = paymentMethodFilter;
+    
+    // Update the specific filter
+    if (filterType === "status") {
+      if (value) {
+        newParams.status = value;
+      } else {
+        delete newParams.status;
+      }
+    } else if (filterType === "method") {
+      if (value) {
+        newParams.method = value;
+      } else {
+        delete newParams.method;
+      }
     }
+    
+    setSearchParams(newParams);
   };
 
   const handlePaymentConfirm = async (amount) => {
@@ -75,45 +95,82 @@ export default function Payments() {
     <div className="w-full h-full">
       <h1 className="text-2xl mb-3">Payments</h1>
 
-      {/* Filter Tabs */}
-      <div className="flex gap-2 mb-4">
-        <button
-          onClick={() => handleFilterChange(null)}
-          className={`px-4 py-2 rounded-full text-sm transition-all ${
-            !statusFilter
-              ? "bg-white/20 text-white"
-              : "bg-white/5 text-white/60 hover:bg-white/10"
-          }`}
-        >
-          All ({allPayments.length})
-        </button>
-        <button
-          onClick={() => handleFilterChange("Pending")}
-          className={`px-4 py-2 rounded-full text-sm transition-all ${
-            statusFilter === "Pending"
-              ? "bg-amber-600 text-white"
-              : "bg-white/5 text-white/60 hover:bg-white/10"
-          }`}
-        >
-          Pending ({allPayments.filter((p) => p.status === "Pending").length})
-        </button>
-        <button
-          onClick={() => handleFilterChange("Complete")}
-          className={`px-4 py-2 rounded-full text-sm transition-all ${
-            statusFilter === "Complete"
-              ? "bg-green-700 text-white"
-              : "bg-white/5 text-white/60 hover:bg-white/10"
-          }`}
-        >
-          Complete ({allPayments.filter((p) => p.status === "Complete").length})
-        </button>
+      {/* Filter Controls */}
+      <div className="flex justify-between items-center mb-4">
+        {/* Status Filter Tabs */}
+        <div className="flex gap-2">
+          <button
+            onClick={() => handleFilterChange("status", null)}
+            className={`px-4 py-2 rounded-full text-sm transition-all ${
+              !statusFilter
+                ? "bg-white/20 text-white"
+                : "bg-white/5 text-white/60 hover:bg-white/10"
+            }`}
+          >
+            All ({allPayments.length})
+          </button>
+          <button
+            onClick={() => handleFilterChange("status", "Pending")}
+            className={`px-4 py-2 rounded-full text-sm transition-all ${
+              statusFilter === "Pending"
+                ? "bg-amber-600 text-white"
+                : "bg-white/5 text-white/60 hover:bg-white/10"
+            }`}
+          >
+            Pending ({allPayments.filter((p) => p.status === "Pending").length})
+          </button>
+          <button
+            onClick={() => handleFilterChange("status", "Complete")}
+            className={`px-4 py-2 rounded-full text-sm transition-all ${
+              statusFilter === "Complete"
+                ? "bg-green-700 text-white"
+                : "bg-white/5 text-white/60 hover:bg-white/10"
+            }`}
+          >
+            Complete ({allPayments.filter((p) => p.status === "Complete").length})
+          </button>
+        </div>
+
+        {/* Payment Method Filter */}
+        <div className="flex gap-2">
+          <button
+            onClick={() => handleFilterChange("method", null)}
+            className={`px-3 py-2 rounded-full text-sm transition-all ${
+              !paymentMethodFilter
+                ? "bg-white/20 text-white"
+                : "bg-white/5 text-white/60 hover:bg-white/10"
+            }`}
+          >
+            All Methods
+          </button>
+          <button
+            onClick={() => handleFilterChange("method", "Cash")}
+            className={`px-3 py-2 rounded-full text-sm transition-all ${
+              paymentMethodFilter === "Cash"
+                ? "bg-orange-600 text-white"
+                : "bg-white/5 text-white/60 hover:bg-white/10"
+            }`}
+          >
+            💵 Cash
+          </button>
+          <button
+            onClick={() => handleFilterChange("method", "Bank Transfer")}
+            className={`px-3 py-2 rounded-full text-sm transition-all ${
+              paymentMethodFilter === "Bank Transfer"
+                ? "bg-blue-600 text-white"
+                : "bg-white/5 text-white/60 hover:bg-white/10"
+            }`}
+          >
+            💳 Bank Transfer
+          </button>
+        </div>
       </div>
 
       {filteredPayments.length === 0 && (
         <div className="flex justify-center items-center w-full h-[35vh]">
           <div className="text-center">
-            {statusFilter
-              ? `No ${statusFilter.toLowerCase()} payments!`
+            {statusFilter || paymentMethodFilter
+              ? "No payments match the selected filters!"
               : "No payments pending!"}
           </div>
         </div>
@@ -133,12 +190,25 @@ export default function Payments() {
                 </div>
               ) : null}
             </div>
-            <div
-              className={`${
-                entry.status === "Pending" ? "bg-amber-600" : "bg-green-700"
-              } rounded-full p-1 px-2 w-23 text-center`}
-            >
-              {entry.status}
+            <div className="flex gap-2 items-center">
+              {/* Payment Method Pill */}
+              <div
+                className={`${
+                  entry.payment_method === "Bank Transfer"
+                    ? "bg-blue-600/80"
+                    : "bg-orange-600/80"
+                } rounded-full py-2 px-3 text-xs font-medium`}
+              >
+                {entry.payment_method === "Bank Transfer" ? "💳" : "💵"} {entry.payment_method || "Cash"}
+              </div>
+              {/* Status Pill */}
+              <div
+                className={`${
+                  entry.status === "Pending" ? "bg-amber-600" : "bg-green-700"
+                } rounded-full py-2 px-3 w-23 text-xs font-medium text-center`}
+              >
+                {entry.status}
+              </div>
             </div>
           </div>
         ))}

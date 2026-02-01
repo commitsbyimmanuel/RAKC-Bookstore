@@ -24,6 +24,11 @@ const paymentSchema = new mongoose.Schema({
     type: String,
     enum: ['Pending', 'Complete'],
     default: 'Pending'
+  },
+  payment_method: {
+    type: String,
+    enum: ['Cash', 'Bank Transfer'],
+    default: 'Cash'
   }
 }, {
   timestamps: true,

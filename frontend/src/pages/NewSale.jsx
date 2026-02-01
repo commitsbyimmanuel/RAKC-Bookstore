@@ -105,7 +105,7 @@ export default function NewSale() {
     setShowCheckoutModal(true);
   };
 
-  const handleCheckoutConfirm = async (amountPaid) => {
+  const handleCheckoutConfirm = async (amountPaid, paymentMethod) => {
     try {
       const totalAmount = cart.reduce((sum, item) => sum + (item.price || 0) * item.quantity, 0);
       
@@ -118,6 +118,7 @@ export default function NewSale() {
         total_amount: totalAmount,
         amount_payed: amountPaid,
         status: status,
+        payment_method: paymentMethod,
       });
 
       // 2. Record the sale

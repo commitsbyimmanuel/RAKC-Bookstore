@@ -1,4 +1,6 @@
 import { useState, useMemo } from "react";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import { usePayments } from "../services/localAPI";
 import {
   PieChart,
@@ -13,15 +15,60 @@ import {
   Legend,
 } from "recharts";
 
+// Custom dark theme styles for react-datepicker
+const datePickerStyles = `
+  .dark-datepicker .react-datepicker {
+    background-color: #1a1a1a;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    font-family: inherit;
+  }
+  .dark-datepicker .react-datepicker__header {
+    background-color: #1a1a1a;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  .dark-datepicker .react-datepicker__current-month,
+  .dark-datepicker .react-datepicker__day-name {
+    color: rgba(255, 255, 255, 0.8);
+  }
+  .dark-datepicker .react-datepicker__day {
+    color: rgba(255, 255, 255, 0.7);
+    border-radius: 8px;
+  }
+  .dark-datepicker .react-datepicker__day:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+  }
+  .dark-datepicker .react-datepicker__day--selected,
+  .dark-datepicker .react-datepicker__day--keyboard-selected {
+    background-color: #3B82F6 !important;
+    color: white !important;
+    border-radius: 8px;
+  }
+  .dark-datepicker .react-datepicker__day--in-range {
+    background-color: rgba(59, 130, 246, 0.3);
+  }
+  .dark-datepicker .react-datepicker__day--outside-month {
+    color: rgba(255, 255, 255, 0.3);
+  }
+  .dark-datepicker .react-datepicker__navigation-icon::before {
+    border-color: rgba(255, 255, 255, 0.6);
+  }
+  .dark-datepicker .react-datepicker__navigation:hover *::before {
+    border-color: white;
+  }
+  .dark-datepicker .react-datepicker__triangle {
+    display: none;
+  }
+`;
+
 export default function Reports() {
   // Default date range: 3 months ago to today
   const today = new Date();
   const threeMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 3, today.getDate());
   
-  const formatDateForInput = (date) => date.toISOString().split("T")[0];
-  
-  const [dateFrom, setDateFrom] = useState(formatDateForInput(threeMonthsAgo));
-  const [dateTo, setDateTo] = useState(formatDateForInput(today));
+  const [dateFrom, setDateFrom] = useState(threeMonthsAgo);
+  const [dateTo, setDateTo] = useState(today);
 
   // Fetch all sales data
   const { data: allSales = [], isLoading } = usePayments();
@@ -166,6 +213,7 @@ export default function Reports() {
 
   return (
     <div className="w-full h-full space-y-6">
+      <style>{datePickerStyles}</style>
       <h1 className="text-2xl">Reports</h1>
 
       {/* Stats Tiles */}
@@ -187,19 +235,34 @@ export default function Reports() {
       {/* Date Range Filter */}
       <div className="flex items-center gap-4 p-4 rounded-xl border border-white/10 bg-white/5">
         <span className="text-sm text-white/60">Date Range:</span>
-        <input
-          type="date"
-          value={dateFrom}
-          onChange={(e) => setDateFrom(e.target.value)}
-          className="bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-white/20"
-        />
+        <div className="dark-datepicker">
+          <DatePicker
+            selected={dateFrom}
+            onChange={(date) => setDateFrom(date)}
+            selectsStart
+            startDate={dateFrom}
+            endDate={dateTo}
+            maxDate={dateTo}
+            dateFormat="MMM dd, yyyy"
+            className="bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-white/20 w-36 cursor-pointer"
+            popperClassName="dark-datepicker"
+          />
+        </div>
         <span className="text-white/40">to</span>
-        <input
-          type="date"
-          value={dateTo}
-          onChange={(e) => setDateTo(e.target.value)}
-          className="bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-white/20"
-        />
+        <div className="dark-datepicker">
+          <DatePicker
+            selected={dateTo}
+            onChange={(date) => setDateTo(date)}
+            selectsEnd
+            startDate={dateFrom}
+            endDate={dateTo}
+            minDate={dateFrom}
+            maxDate={new Date()}
+            dateFormat="MMM dd, yyyy"
+            className="bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-white/20 w-36 cursor-pointer"
+            popperClassName="dark-datepicker"
+          />
+        </div>
       </div>
 
       {/* Charts Row */}

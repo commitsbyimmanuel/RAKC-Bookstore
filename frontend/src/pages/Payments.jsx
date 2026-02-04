@@ -6,7 +6,9 @@ import PaymentModal from "../ui/PaymentModal";
 export default function Payments() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedPayment, setSelectedPayment] = useState(null);
-  const statusFilter = searchParams.get("status"); // "Pending", "Complete", or null (all)
+  
+  // Default to "Pending" if no status param exists
+  const statusFilter = searchParams.get("status") || "Pending";
   const paymentMethodFilter = searchParams.get("method"); // "Cash", "Bank Transfer", or null (all)
 
   // Fetch all payments (we filter client-side for tab counts)
@@ -15,10 +17,49 @@ export default function Payments() {
 
   // Filter payments based on status and payment method query params
   const filteredPayments = allPayments.filter((p) => {
-    const matchesStatus = !statusFilter || p.paymentStatus === statusFilter;
+    const matchesStatus = statusFilter === "All" || p.paymentStatus === statusFilter;
     const matchesMethod = !paymentMethodFilter || p.paymentMethod === paymentMethodFilter;
     return matchesStatus && matchesMethod;
   });
+
+  // Helper to parse date from purchaseDate string (e.g., "Feb 04, 2026 17:39")
+  const parseDate = (dateStr) => {
+    if (!dateStr) return new Date(0);
+    return new Date(dateStr);
+  };
+
+  // Helper to format date for grouping (e.g., "Feb 04, 2026")
+  const formatDateForGroup = (dateStr) => {
+    if (!dateStr) return "Unknown Date";
+    const date = parseDate(dateStr);
+    if (isNaN(date.getTime())) return "Unknown Date";
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    return `${months[date.getMonth()]} ${String(date.getDate()).padStart(2, '0')}, ${date.getFullYear()}`;
+  };
+
+  // Sort and group payments: by date descending, then name ascending within groups
+  const sortedPayments = [...filteredPayments].sort((a, b) => {
+    const dateA = parseDate(a.purchaseDate);
+    const dateB = parseDate(b.purchaseDate);
+    // Sort by date descending
+    if (dateB.getTime() !== dateA.getTime()) {
+      return dateB.getTime() - dateA.getTime();
+    }
+    // Then by name ascending
+    return (a.customerName || "").localeCompare(b.customerName || "");
+  });
+
+  // Group payments by date
+  const groupedPayments = sortedPayments.reduce((groups, payment) => {
+    const dateKey = formatDateForGroup(payment.purchaseDate);
+    if (!groups[dateKey]) {
+      groups[dateKey] = [];
+    }
+    groups[dateKey].push(payment);
+    return groups;
+  }, {});
+
+  const dateGroups = Object.keys(groupedPayments);
 
   const handleFilterChange = (filterType, value) => {
     const newParams = {};
@@ -84,7 +125,7 @@ export default function Payments() {
         <h1 className="text-2xl mb-3">Payments</h1>
         <div className="flex justify-center items-center w-full h-[35vh]">
           <div className="text-center text-red-400">
-            Failed to load payments. Make sure json-server is running.
+            Failed to load payments. Make sure the server is running.
           </div>
         </div>
       </div>
@@ -100,9 +141,9 @@ export default function Payments() {
         {/* Status Filter Tabs */}
         <div className="flex gap-2">
           <button
-            onClick={() => handleFilterChange("status", null)}
+            onClick={() => handleFilterChange("status", "All")}
             className={`px-4 py-2 rounded-full text-sm transition-all ${
-              !statusFilter
+              statusFilter === "All"
                 ? "bg-white/20 text-white"
                 : "bg-white/5 text-white/60 hover:bg-white/10"
             }`}
@@ -175,40 +216,53 @@ export default function Payments() {
           </div>
         </div>
       )}
-      <div className="divide-y-1">
-        {filteredPayments.map((entry) => (
-          <div
-            key={entry.id}
-            onClick={() => setSelectedPayment(entry)}
-            className="py-5 items-center flex justify-between cursor-pointer hover:bg-white/5 rounded-2xl px-4 transition-all"
-          >
-          <div className="flex-col">
-              <div className="text-lg">{entry.customerName}</div>
-              {entry.paymentStatus === "Pending" ? (
-                <div className="text-sm italic font-medium">
-                  Amount Pending: {entry.totalAmount - (entry.amountPaid || 0)}
-                </div>
-              ) : null}
+
+      {/* Grouped Payments by Date */}
+      <div className="space-y-4">
+        {dateGroups.map((dateKey) => (
+          <div key={dateKey}>
+            {/* Date Header */}
+            <div className="text-sm font-medium text-white/40 uppercase tracking-wider px-4 py-2 border-b border-white/10">
+              {dateKey}
             </div>
-            <div className="flex gap-2 items-center">
-              {/* Payment Method Pill */}
-              <div
-                className={`${
-                  entry.paymentMethod === "Bank Transfer"
-                    ? "bg-blue-600/80"
-                    : "bg-orange-600/80"
-                } rounded-full py-2 px-3 text-xs font-medium`}
-              >
-                {entry.paymentMethod === "Bank Transfer" ? "💳" : "💵"} {entry.paymentMethod || "Cash"}
-              </div>
-              {/* Status Pill */}
-              <div
-                className={`${
-                  entry.paymentStatus === "Pending" ? "bg-amber-600" : "bg-green-700"
-                } rounded-full py-2 px-3 w-23 text-xs font-medium text-center`}
-              >
-                {entry.paymentStatus}
-              </div>
+            {/* Payments for this date */}
+            <div className="divide-y divide-white/5">
+              {groupedPayments[dateKey].map((entry) => (
+                <div
+                  key={entry.id}
+                  onClick={() => setSelectedPayment(entry)}
+                  className="py-5 items-center flex justify-between cursor-pointer hover:bg-white/5 rounded-2xl px-4 transition-all"
+                >
+                  <div className="flex-col">
+                    <div className="text-lg">{entry.customerName}</div>
+                    {entry.paymentStatus === "Pending" ? (
+                      <div className="text-sm italic font-medium text-amber-400">
+                        Amount Pending: {entry.totalAmount - (entry.amountPaid || 0)} AED
+                      </div>
+                    ) : null}
+                  </div>
+                  <div className="flex gap-2 items-center">
+                    {/* Payment Method Pill */}
+                    <div
+                      className={`${
+                        entry.paymentMethod === "Bank Transfer"
+                          ? "bg-blue-600/80"
+                          : "bg-orange-600/80"
+                      } rounded-full py-2 px-3 text-xs font-medium`}
+                    >
+                      {entry.paymentMethod === "Bank Transfer" ? "💳" : "💵"} {entry.paymentMethod || "Cash"}
+                    </div>
+                    {/* Status Pill */}
+                    <div
+                      className={`${
+                        entry.paymentStatus === "Pending" ? "bg-amber-600" : "bg-green-700"
+                      } rounded-full py-2 px-3 w-23 text-xs font-medium text-center`}
+                    >
+                      {entry.paymentStatus}
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         ))}
@@ -224,3 +278,4 @@ export default function Payments() {
     </div>
   );
 }
+

@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useBookLookup } from "../hooks/useBookLookup";
-import { useCreatePayment, useCreateSale, useUpdateBookStock } from "../services/localAPI";
+import { useCreatePayment, useCreateSale, useSearchDirectory, useUpdateBookStock } from "../services/localAPI";
 import Button from "../ui/Button";
 import CheckoutModal from "../ui/CheckoutModal";
 
@@ -11,10 +11,15 @@ export default function NewSale() {
   const [searchISBN, setSearchISBN] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [customerName, setCustomerName] = useState("");
+  const [customerSearchQuery, setCustomerSearchQuery] = useState("");
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [customerEmail, setCustomerEmail] = useState("");
+  const [showDropdown, setShowDropdown] = useState(false);
   const [purchaseDate, setPurchaseDate] = useState(new Date());
   const [cart, setCart] = useState([]);
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const navigate = useNavigate();
+  const dropdownRef = useRef(null);
 
   // Update time every minute
   useEffect(() => {
@@ -33,6 +38,7 @@ export default function NewSale() {
   };
 
   const { data: book, isLoading, isError, error } = useBookLookup(searchISBN);
+  const { data: searchResults = [] } = useSearchDirectory(customerSearchQuery);
   const updateStockMutation = useUpdateBookStock();
   const createSaleMutation = useCreateSale();
   const createPaymentMutation = useCreatePayment();
@@ -64,6 +70,39 @@ export default function NewSale() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [book]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Handle customer name input
+  const handleCustomerNameChange = (value) => {
+    setCustomerName(value);
+    setCustomerSearchQuery(value);
+    setSelectedCustomer(null);
+    setShowDropdown(value.length > 0);
+    
+    // Clear email when name is cleared or changed
+    if (value.length === 0) {
+      setCustomerEmail("");
+    }
+  };
+
+  // Handle customer selection from dropdown
+  const handleSelectCustomer = (customer) => {
+    setCustomerName(customer.name);
+    setSelectedCustomer(customer);
+    setCustomerEmail(customer.email || "");
+    setCustomerSearchQuery("");
+    setShowDropdown(false);
+  };
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
@@ -355,19 +394,65 @@ export default function NewSale() {
           <h2 className="text-lg font-semibold text-white mb-6 font-mono tracking-tight uppercase border-b border-white/10 pb-4">Details</h2>
           
           <div className="space-y-6 flex-1">
-            <div>
+            <div className="relative" ref={dropdownRef}>
               <label className="block text-xs font-medium text-white/30 uppercase tracking-widest mb-3">
                 CUSTOMER NAME (Optional)
               </label>
               <input
                 type="text"
                 value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
-                placeholder="Enter name..."
+                onChange={(e) => handleCustomerNameChange(e.target.value)}
+                placeholder="Search church members..."
                 className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 
                            text-white placeholder:text-white/20 focus:outline-none 
                            focus:ring-2 focus:ring-white/10 focus:bg-white/10 transition-all shadow-inner"
               />
+              
+              {/* Search Results Dropdown */}
+              {showDropdown && searchResults.length > 0 && (
+                <div className="absolute z-50 w-full mt-2 bg-black/90 backdrop-blur-xl border border-white/20 rounded-xl shadow-2xl overflow-hidden">
+                  <div className="max-h-48 overflow-y-auto">
+                    {searchResults.map((member) => (
+                      <button
+                        key={member._id}
+                        onClick={() => handleSelectCustomer(member)}
+                        className="w-full px-5 py-3 text-left hover:bg-white/10 transition-colors border-b border-white/5 last:border-b-0"
+                      >
+                        <p className="text-sm text-white font-medium">{member.name}</p>
+                        {member.email && (
+                          <p className="text-xs text-white/60 mt-1">{member.email}</p>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Display selected customer email or allow manual entry */}
+              {selectedCustomer?.email && (
+                <div className="mt-3 px-4 py-3 bg-white/5 border border-white/10 rounded-xl">
+                  <p className="text-xs text-white/40 uppercase tracking-wider mb-1">Email</p>
+                  <p className="text-sm text-white/80">{selectedCustomer.email}</p>
+                </div>
+              )}
+              
+              {/* Manual email entry when no customer selected */}
+              {!selectedCustomer && customerName.length > 0 && (
+                <div className="mt-3">
+                  <label className="block text-xs font-medium text-white/30 uppercase tracking-widest mb-2">
+                    Email (Optional)
+                  </label>
+                  <input
+                    type="email"
+                    value={customerEmail}
+                    onChange={(e) => setCustomerEmail(e.target.value)}
+                    placeholder="Enter email..."
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3 
+                               text-white placeholder:text-white/20 focus:outline-none 
+                               focus:ring-2 focus:ring-white/10 focus:bg-white/10 transition-all shadow-inner text-sm"
+                  />
+                </div>
+              )}
             </div>
 
             <div>
@@ -413,6 +498,7 @@ export default function NewSale() {
         <CheckoutModal
           totalAmount={totalPrice}
           customerName={customerName}
+          customerEmail={customerEmail}
           onClose={() => setShowCheckoutModal(false)}
           onConfirm={handleCheckoutConfirm}
         />

@@ -383,5 +383,34 @@ export function useCreatePayment() {
   });
 }
 
+/**
+ * Search directory members by name
+ * @param {string} query - Search query for member name
+ */
+export async function searchDirectory(query) {
+  if (!query || query.trim().length === 0) {
+    return [];
+  }
+  
+  const response = await fetch(`${LOCAL_API_URL}/directory/search?query=${encodeURIComponent(query)}`);
+  if (!response.ok) {
+    throw new Error("Failed to search directory");
+  }
+  return response.json();
+}
+
+/**
+ * Hook to search directory members
+ */
+export function useSearchDirectory(query) {
+  return useQuery({
+    queryKey: ["directory", query],
+    queryFn: () => searchDirectory(query),
+    enabled: !!query && query.trim().length > 0,
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+  });
+}
+
 export { fetchAllBooks as default };
+
 

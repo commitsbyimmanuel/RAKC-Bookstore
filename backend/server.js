@@ -4,6 +4,7 @@ import express from 'express';
 import mongoose from 'mongoose';
 import bookRequestsRouter from './routes/bookRequests.js';
 import booksRouter from './routes/books.js';
+import directoryRouter from './routes/directory.js';
 import paymentsRouter from './routes/payments.js';
 import salesRouter from './routes/sales.js';
 
@@ -40,6 +41,7 @@ app.use('/books', booksRouter);
 app.use('/payments', paymentsRouter);
 app.use('/bookRequests', bookRequestsRouter);
 app.use('/sales', salesRouter);
+app.use('/directory', directoryRouter);
 
 // Root endpoint
 app.get('/', (req, res) => {
@@ -49,7 +51,8 @@ app.get('/', (req, res) => {
       books: '/books',
       payments: '/payments',
       bookRequests: '/bookRequests',
-      sales: '/sales'
+      sales: '/sales',
+      directory: '/directory'
     }
   });
 });

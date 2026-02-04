@@ -1,14 +1,22 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import Button from "./Button";
 
-export default function CheckoutModal({ totalAmount, customerName, onClose, onConfirm }) {
+export default function CheckoutModal({ totalAmount, customerName, customerEmail, onClose, onConfirm }) {
   const [paymentMethod, setPaymentMethod] = useState("Cash");
   const [amountPaid, setAmountPaid] = useState("");
+  const [sendReceipt, setSendReceipt] = useState(true);
   const [error, setError] = useState("");
 
+  // Check if bank transfer is selected without email
+  const isBankTransferWithoutEmail = paymentMethod === "Bank Transfer" && !customerEmail;
+  
   const handleConfirm = () => {
-    // If Bank Transfer, amount is always 0
+    // If Bank Transfer, check for email requirement
     if (paymentMethod === "Bank Transfer") {
+      if (!customerEmail) {
+        return; // Don't proceed without email
+      }
       onConfirm(0, paymentMethod);
       return;
     }
@@ -24,9 +32,9 @@ export default function CheckoutModal({ totalAmount, customerName, onClose, onCo
     onConfirm(amount, paymentMethod);
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-2xl border border-white/20 bg-black/70 p-6 shadow-2xl backdrop-blur-xl">
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-[2px]">
+      <div className="w-full max-w-md rounded-2xl border border-white/20 bg-black/70 p-6 shadow-2xl backdrop-blur-lg">
         <h2 className="mb-4 text-xl font-bold text-white">Complete Sale</h2>
         
         <div className="mb-6 space-y-3">
@@ -92,13 +100,52 @@ export default function CheckoutModal({ totalAmount, customerName, onClose, onCo
         )}
 
         {paymentMethod === "Bank Transfer" && (
-          <div className="mb-6 rounded-xl bg-blue-500/10 border border-blue-500/20 p-4">
-            <p className="text-sm text-blue-300">
-              💳 Bank Transfer selected - Payment will be recorded as pending (AED 0)
-            </p>
-            <p className="text-xs text-blue-300/70 mt-1">
-              Update payment when transfer is received
-            </p>
+          <div className={`mb-6 rounded-xl p-4 ${
+            isBankTransferWithoutEmail 
+              ? 'bg-red-500/10 border border-red-500/20' 
+              : 'bg-blue-500/10 border border-blue-500/20'
+          }`}>
+            {isBankTransferWithoutEmail ? (
+              <>
+                <p className="text-sm text-red-400 font-medium">
+                  ⚠️ Enter customer name and email to avail bank transfer
+                </p>
+                <p className="text-xs text-red-300/70 mt-1">
+                  Email is required for bank transfer receipts and confirmation
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-sm text-blue-300">
+                  💳 Bank Transfer selected - Payment will be recorded as pending (AED 0)
+                </p>
+                <p className="text-xs text-blue-300/70 mt-1">
+                  Update payment when transfer is received
+                </p>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Receipt Checkbox */}
+        {customerEmail && (
+          <div className="mb-6">
+            <label className="flex items-center gap-3 p-4 rounded-xl bg-white/5 border border-white/10 cursor-pointer hover:bg-white/10 transition-colors">
+              <input
+                type="checkbox"
+                checked={sendReceipt}
+                onChange={(e) => setSendReceipt(e.target.checked)}
+                className="w-4 h-4 rounded bg-white/5 border-white/20 text-purple-500 focus:ring-2 focus:ring-purple-500/50"
+              />
+              <div className="flex-1">
+                <p className="text-sm text-white font-medium">
+                  Send receipt to {customerEmail}
+                </p>
+                <p className="text-xs text-white/50 mt-1">
+                  Email confirmation will be sent after sale completion
+                </p>
+              </div>
+            </label>
           </div>
         )}
 
@@ -106,11 +153,17 @@ export default function CheckoutModal({ totalAmount, customerName, onClose, onCo
           <Button variant="secondary" onClick={onClose} className="h-12 flex-1">
             Cancel
           </Button>
-          <Button variant="primary" onClick={handleConfirm} className="h-12 flex-[2]">
+          <Button 
+            variant="primary" 
+            onClick={handleConfirm} 
+            disabled={isBankTransferWithoutEmail}
+            className="h-12 flex-[2]"
+          >
             Complete Sale
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

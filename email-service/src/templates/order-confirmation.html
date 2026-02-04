@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Confirmation</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 40px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #ffffff;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        .success-icon {
+            font-size: 48px;
+            margin: 10px 0;
+        }
+        .content {
+            padding: 30px 40px;
+            color: #333333;
+            line-height: 1.6;
+        }
+        .content h2 {
+            color: #667eea;
+            margin-top: 0;
+        }
+        .order-summary {
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .order-summary p {
+            margin: 8px 0;
+        }
+        .total {
+            font-size: 20px;
+            color: #28a745;
+            font-weight: bold;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid #e0e0e0;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px 40px;
+            text-align: center;
+            font-size: 12px;
+            color: #666666;
+            border-top: 1px solid #e0e0e0;
+        }
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <div class="success-icon">✅</div>
+            <h1>Order Confirmed!</h1>
+        </div>
+        <div class="content">
+            <h2>Thank you for your order</h2>
+            <p>Dear {{customerName}},</p>
+            <p>We're excited to confirm that we've received your order. Here are the details:</p>
+            
+            <div class="order-summary">
+                <p><strong>Order ID:</strong> {{orderId}}</p>
+                <p><strong>Order Date:</strong> {{orderDate}}</p>
+                <p><strong>Payment Method:</strong> {{paymentMethod}}</p>
+                <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 15px 0;">
+                <p><strong>Items:</strong></p>
+                {{orderItems}}
+                <p class="total">Total: AED {{totalAmount}}</p>
+            </div>
+
+            <p>We'll notify you once your order is ready for pickup or has been shipped.</p>
+
+            <p>Thank you for choosing RAKC Bookstore!</p>
+            <p>Best regards,<br><strong>RAKC Bookstore Team</strong></p>
+        </div>
+        <div class="footer">
+            <p>RAKC Bookstore | <a href="mailto:support@rakcbookstore.com">support@rakcbookstore.com</a></p>
+            <p>This is an automated email. Please do not reply directly to this message.</p>
+        </div>
+    </div>
+</body>
+</html>

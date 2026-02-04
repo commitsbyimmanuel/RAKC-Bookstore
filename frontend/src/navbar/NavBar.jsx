@@ -23,6 +23,7 @@ export default function NavBar() {
             { key: "home", label: "Home", link: "/" },
             { key: "orders", label: "Orders", link: "/orders" },
             { key: "payments", label: "Payments", link: "/payments" },
+            { key: "reports", label: "Reports", link: "/reports" },
             { key: "stock", label: "Stock", link: "/stock" },
           ].map((item) => (
             <NavBarItem

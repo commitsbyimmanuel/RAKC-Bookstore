@@ -4,6 +4,7 @@ import Home from "./pages/Home";
 import NewSale from "./pages/NewSale";
 import Orders from "./pages/Orders";
 import Payments from "./pages/Payments";
+import Reports from "./pages/Reports";
 import Stock from "./pages/Stock";
 
 const router = createBrowserRouter([
@@ -25,6 +26,10 @@ const router = createBrowserRouter([
       {
         path: "/payments",
         element: <Payments />,
+      },
+      {
+        path: "/reports",
+        element: <Reports />,
       },
       {
         path: "/stock",

@@ -5,7 +5,7 @@ import mongoose from 'mongoose';
 import bookRequestsRouter from './routes/bookRequests.js';
 import booksRouter from './routes/books.js';
 import directoryRouter from './routes/directory.js';
-import paymentsRouter from './routes/payments.js';
+
 import salesRouter from './routes/sales.js';
 import { connect as connectRabbitMQ } from './utils/rabbitmq.js';
 
@@ -42,7 +42,7 @@ mongoose.connect(mongoURI)
 
 // Routes
 app.use('/books', booksRouter);
-app.use('/payments', paymentsRouter);
+
 app.use('/bookRequests', bookRequestsRouter);
 app.use('/sales', salesRouter);
 app.use('/directory', directoryRouter);
@@ -53,7 +53,6 @@ app.get('/', (req, res) => {
     message: 'RAKC Bookstore API',
     endpoints: {
       books: '/books',
-      payments: '/payments',
       bookRequests: '/bookRequests',
       sales: '/sales',
       directory: '/directory'

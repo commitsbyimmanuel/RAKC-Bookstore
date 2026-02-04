@@ -15,8 +15,8 @@ export default function Payments() {
 
   // Filter payments based on status and payment method query params
   const filteredPayments = allPayments.filter((p) => {
-    const matchesStatus = !statusFilter || p.status === statusFilter;
-    const matchesMethod = !paymentMethodFilter || p.payment_method === paymentMethodFilter;
+    const matchesStatus = !statusFilter || p.paymentStatus === statusFilter;
+    const matchesMethod = !paymentMethodFilter || p.paymentMethod === paymentMethodFilter;
     return matchesStatus && matchesMethod;
   });
 
@@ -48,15 +48,15 @@ export default function Payments() {
   const handlePaymentConfirm = async (amount) => {
     if (!selectedPayment) return;
     
-    const newAmountPayed = selectedPayment.amount_payed + amount;
-    const pendingAmount = selectedPayment.total_amount - newAmountPayed;
-    const newStatus = pendingAmount <= 0 ? "Complete" : "Pending";
+    const newAmountPaid = (selectedPayment.amountPaid || 0) + amount;
+    const pendingAmount = selectedPayment.totalAmount - newAmountPaid;
+    const newPaymentStatus = pendingAmount <= 0 ? "Complete" : "Pending";
     
     try {
       await updatePaymentMutation.mutateAsync({
         id: selectedPayment.id,
-        amount_payed: newAmountPayed,
-        status: newStatus,
+        amountPaid: newAmountPaid,
+        paymentStatus: newPaymentStatus,
       });
       setSelectedPayment(null);
     } catch (err) {
@@ -117,7 +117,7 @@ export default function Payments() {
                 : "bg-white/5 text-white/60 hover:bg-white/10"
             }`}
           >
-            Pending ({allPayments.filter((p) => p.status === "Pending").length})
+            Pending ({allPayments.filter((p) => p.paymentStatus === "Pending").length})
           </button>
           <button
             onClick={() => handleFilterChange("status", "Complete")}
@@ -127,7 +127,7 @@ export default function Payments() {
                 : "bg-white/5 text-white/60 hover:bg-white/10"
             }`}
           >
-            Complete ({allPayments.filter((p) => p.status === "Complete").length})
+            Complete ({allPayments.filter((p) => p.paymentStatus === "Complete").length})
           </button>
         </div>
 
@@ -182,11 +182,11 @@ export default function Payments() {
             onClick={() => setSelectedPayment(entry)}
             className="py-5 items-center flex justify-between cursor-pointer hover:bg-white/5 rounded-2xl px-4 transition-all"
           >
-            <div className="flex-col">
-              <div className="text-lg">{entry.payer}</div>
-              {entry.status === "Pending" ? (
+          <div className="flex-col">
+              <div className="text-lg">{entry.customerName}</div>
+              {entry.paymentStatus === "Pending" ? (
                 <div className="text-sm italic font-medium">
-                  Amount Pending: {entry.total_amount - entry.amount_payed}
+                  Amount Pending: {entry.totalAmount - (entry.amountPaid || 0)}
                 </div>
               ) : null}
             </div>
@@ -194,20 +194,20 @@ export default function Payments() {
               {/* Payment Method Pill */}
               <div
                 className={`${
-                  entry.payment_method === "Bank Transfer"
+                  entry.paymentMethod === "Bank Transfer"
                     ? "bg-blue-600/80"
                     : "bg-orange-600/80"
                 } rounded-full py-2 px-3 text-xs font-medium`}
               >
-                {entry.payment_method === "Bank Transfer" ? "💳" : "💵"} {entry.payment_method || "Cash"}
+                {entry.paymentMethod === "Bank Transfer" ? "💳" : "💵"} {entry.paymentMethod || "Cash"}
               </div>
               {/* Status Pill */}
               <div
                 className={`${
-                  entry.status === "Pending" ? "bg-amber-600" : "bg-green-700"
+                  entry.paymentStatus === "Pending" ? "bg-amber-600" : "bg-green-700"
                 } rounded-full py-2 px-3 w-23 text-xs font-medium text-center`}
               >
-                {entry.status}
+                {entry.paymentStatus}
               </div>
             </div>
           </div>

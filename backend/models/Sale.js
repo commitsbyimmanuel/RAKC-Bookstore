@@ -47,6 +47,15 @@ const saleSchema = new mongoose.Schema({
   soldAt: {
     type: String,
     required: true
+  },
+  paymentStatus: {
+    type: String,
+    enum: ['Pending', 'Complete'],
+    default: 'Pending'
+  },
+  amountPaid: {
+    type: Number,
+    default: 0
   }
 }, {
   timestamps: true,

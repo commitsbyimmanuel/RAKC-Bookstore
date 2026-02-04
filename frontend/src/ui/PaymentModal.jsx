@@ -5,8 +5,8 @@ export default function PaymentModal({ payment, onClose, onConfirm }) {
   const [amountToPay, setAmountToPay] = useState("");
   const [error, setError] = useState("");
 
-  const pendingAmount = payment.total_amount - payment.amount_payed;
-  const isBankTransfer = payment.payment_method === "Bank Transfer";
+  const pendingAmount = payment.totalAmount - (payment.amountPaid || 0);
+  const isBankTransfer = payment.paymentMethod === "Bank Transfer";
 
   const handleConfirm = () => {
     const amount = parseFloat(amountToPay);
@@ -39,7 +39,7 @@ export default function PaymentModal({ payment, onClose, onConfirm }) {
         <div className="mb-6 space-y-3">
           <div className="flex justify-between text-sm">
             <span className="text-white/60">Customer:</span>
-            <span className="font-medium text-white">{payment.payer}</span>
+            <span className="font-medium text-white">{payment.customerName}</span>
           </div>
           {isBankTransfer && (
             <div className="flex justify-between text-sm">
@@ -49,11 +49,11 @@ export default function PaymentModal({ payment, onClose, onConfirm }) {
           )}
           <div className="flex justify-between text-sm">
             <span className="text-white/60">Total Amount:</span>
-            <span className="font-medium text-white">AED {payment.total_amount}</span>
+            <span className="font-medium text-white">AED {payment.totalAmount}</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-white/60">Amount Paid:</span>
-            <span className="font-medium text-white">AED {payment.amount_payed}</span>
+            <span className="font-medium text-white">AED {payment.amountPaid || 0}</span>
           </div>
           <div className="flex justify-between border-t border-white/10 pt-3 text-base">
             <span className="text-white/80">Amount Pending:</span>

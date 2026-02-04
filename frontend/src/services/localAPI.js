@@ -14,17 +14,17 @@ export async function fetchAllBooks() {
 }
 
 /**
- * Fetch all payments from local json-server
- * @param {string} status - Optional status filter ("Pending" or "Complete")
+ * Fetch sales with payment info (replaces old payments endpoint)
+ * @param {string} paymentStatus - Optional status filter ("Pending" or "Complete")
  */
-export async function fetchPayments(status) {
-  const url = status 
-    ? `${LOCAL_API_URL}/payments?status=${status}`
-    : `${LOCAL_API_URL}/payments`;
+export async function fetchPayments(paymentStatus) {
+  const url = paymentStatus 
+    ? `${LOCAL_API_URL}/sales?paymentStatus=${paymentStatus}`
+    : `${LOCAL_API_URL}/sales`;
   
   const response = await fetch(url);
   if (!response.ok) {
-    throw new Error("Failed to fetch payments");
+    throw new Error("Failed to fetch sales");
   }
   return response.json();
 }
@@ -75,10 +75,10 @@ export function useBooks() {
 /**
  * Hook to fetch payments with optional status filter
  */
-export function usePayments(status) {
+export function usePayments(paymentStatus) {
   return useQuery({
-    queryKey: ["payments", status],
-    queryFn: () => fetchPayments(status),
+    queryKey: ["sales", "payments", paymentStatus],
+    queryFn: () => fetchPayments(paymentStatus),
     staleTime: 1000 * 60 * 2, // Cache for 2 minutes
   });
 }
@@ -205,12 +205,12 @@ export function useUpdateBook() {
 }
 
 /**
- * Update payment details in local json-server
- * @param {string} id - The payment ID
- * @param {Object} updateData - Data to update (amount_payed, status, etc.)
+ * Update sale payment details
+ * @param {string} id - The sale ID
+ * @param {Object} updateData - Data to update (amountPaid, paymentStatus, etc.)
  */
 export async function updatePayment(id, updateData) {
-  const response = await fetch(`${LOCAL_API_URL}/payments/${id}`, {
+  const response = await fetch(`${LOCAL_API_URL}/sales/${id}`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
@@ -218,13 +218,13 @@ export async function updatePayment(id, updateData) {
     body: JSON.stringify(updateData),
   });
   if (!response.ok) {
-    throw new Error("Failed to update payment");
+    throw new Error("Failed to update sale payment");
   }
   return response.json();
 }
 
 /**
- * Hook to update payment
+ * Hook to update sale payment
  */
 export function useUpdatePayment() {
   const queryClient = useQueryClient();
@@ -232,7 +232,7 @@ export function useUpdatePayment() {
   return useMutation({
     mutationFn: ({ id, ...updateData }) => updatePayment(id, updateData),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["payments"] });
+      queryClient.invalidateQueries({ queryKey: ["sales"] });
     },
   });
 }
@@ -348,38 +348,8 @@ export function useCreateBookRequest() {
   });
 }
 
-/**
- * Create a new payment record
- * @param {Object} paymentData - The payment data (payer, total_amount, amount_payed, status)
- */
-export async function createPayment(paymentData) {
-  const response = await fetch(`${LOCAL_API_URL}/payments`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(paymentData),
-  });
-  if (!response.ok) {
-    throw new Error("Failed to create payment");
-  }
-  return response.json();
-}
-
-/**
- * Hook to create a new payment
- */
-export function useCreatePayment() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: createPayment,
-    onSuccess: () => {
-      // Invalidate payments queries to refetch the list
-      queryClient.invalidateQueries({ queryKey: ["payments"] });
-    },
-  });
-}
+// Note: createPayment is no longer needed as payments are tracked via sales.
+// Use createSale instead, which includes paymentStatus and amountPaid fields.
 
 /**
  * Search directory members by name

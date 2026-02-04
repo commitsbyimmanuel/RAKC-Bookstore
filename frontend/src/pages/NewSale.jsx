@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useBookLookup } from "../hooks/useBookLookup";
-import { useCreatePayment, useCreateSale, useSearchDirectory, useUpdateBookStock } from "../services/localAPI";
+import { useCreateSale, useSearchDirectory, useUpdateBookStock } from "../services/localAPI";
 import Button from "../ui/Button";
 import CheckoutModal from "../ui/CheckoutModal";
 
@@ -41,7 +41,6 @@ export default function NewSale() {
   const { data: searchResults = [] } = useSearchDirectory(customerSearchQuery);
   const updateStockMutation = useUpdateBookStock();
   const createSaleMutation = useCreateSale();
-  const createPaymentMutation = useCreatePayment();
 
 
   // Auto-search when ISBN reaches 13 digits
@@ -149,18 +148,9 @@ export default function NewSale() {
       const totalAmount = cart.reduce((sum, item) => sum + (item.price || 0) * item.quantity, 0);
       
       // Determine payment status
-      const status = amountPaid >= totalAmount ? "Complete" : "Pending";
+      const paymentStatus = amountPaid >= totalAmount ? "Complete" : "Pending";
       
-      // 1. Create payment record
-      await createPaymentMutation.mutateAsync({
-        payer: customerName.trim() || "Anonymous",
-        total_amount: totalAmount,
-        amount_payed: amountPaid,
-        status: status,
-        payment_method: paymentMethod,
-      });
-
-      // 2. Record the sale
+      // Create the sale with embedded payment tracking
       await createSaleMutation.mutateAsync({
         items: cart.map(item => ({
           isbn: item.isbn,
@@ -174,11 +164,13 @@ export default function NewSale() {
         sendReceipt: sendReceipt && !!customerEmail,
         paymentMethod: paymentMethod,
         totalAmount: totalAmount,
+        amountPaid: amountPaid,
+        paymentStatus: paymentStatus,
         purchaseDate: formatDate(purchaseDate),
         soldAt: new Date().toISOString(),
       });
 
-      // 3. Update stock for each item
+      // Update stock for each item
       for (const item of cart) {
         const newStock = Math.max(0, item.stock - item.quantity);
         await updateStockMutation.mutateAsync({
@@ -196,7 +188,7 @@ export default function NewSale() {
   };
 
 
-  const isProcessing = updateStockMutation.isPending || createSaleMutation.isPending || createPaymentMutation.isPending;
+  const isProcessing = updateStockMutation.isPending || createSaleMutation.isPending;
   const totalPrice = cart.reduce((sum, item) => sum + (item.price || 0) * item.quantity, 0);
   const canAddToCart = book && book.source === "local" && book.stock >= quantity && quantity > 0;
 

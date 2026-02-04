@@ -3,6 +3,21 @@ const mongoose = require('mongoose');
 const config = require('../config/email.config');
 const emailService = require('../services/email.service');
 
+// Define Sale schema for email service (mirrors backend schema)
+const saleSchema = new mongoose.Schema({
+  id: String,
+  customerName: String,
+  customerEmail: String,
+  totalAmount: Number,
+  paymentMethod: String,
+  paymentStatus: String,
+  amountPaid: Number,
+  purchaseDate: String,
+}, { collection: 'sales' });
+
+// Only define model if not already defined
+const Sale = mongoose.models.Sale || mongoose.model('Sale', saleSchema);
+
 class PaymentReminderScheduler {
   constructor() {
     this.task = null;
@@ -21,33 +36,27 @@ class PaymentReminderScheduler {
 
   async sendPaymentReminders() {
     try {
-      // Get all pending payments from your database
-      // This is a placeholder - adjust based on your actual schema
-      const Payment = mongoose.model('Payment');
-      
-      const pendingPayments = await Payment.find({
-        status: 'Pending',
-        amountPending: { $gt: 0 },
-      })
-        .populate('customerId', 'name email')
-        .populate('orderId', '_id createdAt');
+      // Get all pending sales with Bank Transfer payment method
+      const pendingSales = await Sale.find({
+        paymentStatus: 'Pending',
+        paymentMethod: 'Bank Transfer',
+        customerEmail: { $ne: '', $exists: true }
+      });
 
-      console.log(`📧 Found ${pendingPayments.length} pending payments`);
+      console.log(`📧 Found ${pendingSales.length} pending sales to remind`);
 
-      for (const payment of pendingPayments) {
-        // Calculate due date (e.g., 30 days from order date)
-        const orderDate = new Date(payment.orderId.createdAt);
-        const dueDate = new Date(orderDate);
-        dueDate.setDate(dueDate.getDate() + 30);
+      for (const sale of pendingSales) {
+        const amountDue = sale.totalAmount - (sale.amountPaid || 0);
+        
+        // Skip if already fully paid
+        if (amountDue <= 0) continue;
 
         await emailService.sendPaymentReminder({
-          customerEmail: payment.customerId.email,
-          customerName: payment.customerId.name,
-          orderId: payment.orderId._id.toString(),
-          orderDate: orderDate.toLocaleDateString('en-GB'),
-          amountDue: payment.amountPending.toFixed(2),
-          dueDate: dueDate.toLocaleDateString('en-GB'),
-          paymentLink: `https://yourbookstore.com/payments/${payment._id}`,
+          customerEmail: sale.customerEmail,
+          customerName: sale.customerName,
+          orderId: sale.id,
+          orderDate: sale.purchaseDate,
+          amountDue: amountDue.toFixed(2),
         });
 
         // Optional: Add delay to avoid rate limiting

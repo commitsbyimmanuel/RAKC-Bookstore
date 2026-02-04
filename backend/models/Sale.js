@@ -5,7 +5,8 @@ const saleItemSchema = new mongoose.Schema({
   isbn: String,
   title: String,
   quantity: Number,
-  unitPrice: Number
+  unitPrice: Number,
+  coverUrl: String
 }, { _id: false });
 
 const saleSchema = new mongoose.Schema({
@@ -21,6 +22,19 @@ const saleSchema = new mongoose.Schema({
   customerName: {
     type: String,
     required: true
+  },
+  customerEmail: {
+    type: String,
+    default: ''
+  },
+  sendReceipt: {
+    type: Boolean,
+    default: false
+  },
+  paymentMethod: {
+    type: String,
+    enum: ['Cash', 'Bank Transfer'],
+    default: 'Cash'
   },
   totalAmount: {
     type: Number,

@@ -285,13 +285,11 @@ export async function createSale(saleData) {
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      ...saleData,
-      soldAt: new Date().toISOString(),
-    }),
+    body: JSON.stringify(saleData),
   });
   if (!response.ok) {
-    throw new Error("Failed to record sale");
+    const errorData = await response.json();
+    throw new Error(errorData.error || "Failed to record sale");
   }
   return response.json();
 }

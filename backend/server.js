@@ -7,13 +7,14 @@ import booksRouter from './routes/books.js';
 import directoryRouter from './routes/directory.js';
 import paymentsRouter from './routes/payments.js';
 import salesRouter from './routes/sales.js';
+import { connect as connectRabbitMQ } from './utils/rabbitmq.js';
 
 // Load environment variables
 dotenv.config({ path: '.env.local' });
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/Bookstore';
+const mongoURI = process.env.MONGODB_URI;
 
 // Middleware
 app.use(cors());
@@ -26,13 +27,16 @@ app.use((req, res, next) => {
 });
 
 // Connect to MongoDB
-mongoose.connect(MONGODB_URI)
-  .then(() => {
+mongoose.connect(mongoURI)
+  .then(async () => {
     console.log('✓ Connected to MongoDB');
-    console.log(`✓ Database: ${mongoose.connection.name}`);
+    console.log(`✓ Database: ${mongoose.connection.db.databaseName}`);
+    
+    // Initialize RabbitMQ connection
+    await connectRabbitMQ();
   })
-  .catch((error) => {
-    console.error('✗ MongoDB connection error:', error.message);
+  .catch((err) => {
+    console.error('❌ MongoDB connection error:', err);
     process.exit(1);
   });
 

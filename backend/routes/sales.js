@@ -1,6 +1,7 @@
 import express from 'express';
 import Book from '../models/Book.js';
 import Sale from '../models/Sale.js';
+import { publishToQueue } from '../utils/rabbitmq.js';
 
 const router = express.Router();
 
@@ -101,8 +102,32 @@ router.post('/', async (req, res) => {
     const sale = new Sale(req.body);
     await sale.save();
     const savedSale = await Sale.findOne({ id: sale.id }).select('-_id -__v');
+    
+    // Publish to RabbitMQ if sendReceipt is true and email exists
+    // Wrapped in try-catch so email failures don't break sale creation
+    if (savedSale.sendReceipt && savedSale.customerEmail) {
+      try {
+        await publishToQueue('emails-to-send', {
+          type: 'order_confirmation',
+          data: {
+            customerEmail: savedSale.customerEmail,
+            customerName: savedSale.customerName,
+            orderId: savedSale.id,
+            orderDate: savedSale.purchaseDate,
+            paymentMethod: savedSale.paymentMethod,
+            orderItems: savedSale.items,
+            totalAmount: savedSale.totalAmount
+          }
+        });
+      } catch (emailError) {
+        console.error('Failed to publish email notification:', emailError.message);
+        // Continue with sale response even if email fails
+      }
+    }
+    
     res.status(201).json(savedSale);
   } catch (error) {
+    console.error('Sale creation error:', error);
     res.status(400).json({ error: error.message });
   }
 });

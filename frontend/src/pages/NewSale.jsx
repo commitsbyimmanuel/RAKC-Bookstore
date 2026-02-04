@@ -144,7 +144,7 @@ export default function NewSale() {
     setShowCheckoutModal(true);
   };
 
-  const handleCheckoutConfirm = async (amountPaid, paymentMethod) => {
+  const handleCheckoutConfirm = async (amountPaid, paymentMethod, sendReceipt) => {
     try {
       const totalAmount = cart.reduce((sum, item) => sum + (item.price || 0) * item.quantity, 0);
       
@@ -166,11 +166,16 @@ export default function NewSale() {
           isbn: item.isbn,
           title: item.title,
           quantity: item.quantity,
-          unitPrice: item.price
+          unitPrice: item.price,
+          coverUrl: item.coverUrl || ''
         })),
         customerName: customerName.trim() || "Anonymous",
+        customerEmail: customerEmail || '',
+        sendReceipt: sendReceipt && !!customerEmail,
+        paymentMethod: paymentMethod,
         totalAmount: totalAmount,
         purchaseDate: formatDate(purchaseDate),
+        soldAt: new Date().toISOString(),
       });
 
       // 3. Update stock for each item

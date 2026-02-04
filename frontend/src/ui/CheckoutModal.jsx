@@ -17,7 +17,7 @@ export default function CheckoutModal({ totalAmount, customerName, customerEmail
       if (!customerEmail) {
         return; // Don't proceed without email
       }
-      onConfirm(0, paymentMethod);
+      onConfirm(0, paymentMethod, sendReceipt);
       return;
     }
     
@@ -29,7 +29,7 @@ export default function CheckoutModal({ totalAmount, customerName, customerEmail
       return;
     }
     
-    onConfirm(amount, paymentMethod);
+    onConfirm(amount, paymentMethod, sendReceipt);
   };
 
   return createPortal(

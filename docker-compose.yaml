@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # MongoDB Database
   mongodb:
@@ -41,6 +39,35 @@ services:
       - "80:80"
     depends_on:
       - backend
+    networks:
+      - rakc-network
+
+  # RabbitMQ Message Broker
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    container_name: rakc-rabbitmq
+    restart: unless-stopped
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - rakc-network
+
+  # Email Service
+  email-service:
+    image: ghcr.io/commitsbyimmanuel/rakc-bookstore-email-service:v1.0.0
+    container_name: rakc-email-service
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/Bookstore
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+    ports:
+      - "3002:3002"
+    depends_on:
+      - mongodb
+      - rabbitmq
     networks:
       - rakc-network
 

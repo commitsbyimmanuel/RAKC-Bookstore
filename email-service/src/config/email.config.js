@@ -3,7 +3,7 @@ require('dotenv').config({ path: '.env.local' });
 module.exports = {
   rabbitmq: {
     url: process.env.RABBITMQ_URL || 'amqp://guest:guest@localhost:5672',
-    queue: process.env.RABBITMQ_QUEUE_EMAIL || 'email_notifications',
+    queue: process.env.RABBITMQ_QUEUE_EMAIL || 'emails-to-send',
   },
   smtp: {
     host: process.env.SMTP_HOST,

@@ -107,7 +107,7 @@ class EmailService {
    */
   formatOrderItems(items) {
     if (!items || items.length === 0) {
-      return '<p style="color: rgba(255, 255, 255, 0.5); text-align: center;">No items</p>';
+      return '<p style="color: #888888; text-align: center;">No items</p>';
     }
 
     return items.map(item => {
@@ -115,14 +115,26 @@ class EmailService {
       const itemTotal = (item.quantity * item.unitPrice).toFixed(2);
       
       return `
-        <div class="item">
-          <img src="${coverUrl}" alt="${item.title}" class="item-cover" />
-          <div class="item-details">
-            <div class="item-title">${item.title}</div>
-            <div class="item-meta">${item.quantity} × ${item.unitPrice} AED</div>
-          </div>
-          <div class="item-price">${itemTotal} AED</div>
-        </div>
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #1e1e1e; border: 1px solid #333333; border-radius: 8px; margin-bottom: 12px;">
+          <tr>
+            <td style="padding: 16px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                <tr>
+                  <td width="70" valign="top">
+                    <img src="${coverUrl}" alt="${item.title}" width="60" height="80" style="display: block; border-radius: 6px; border: 1px solid #3a3a3a;" />
+                  </td>
+                  <td valign="middle" style="padding-left: 16px;">
+                    <p style="margin: 0 0 4px 0; font-size: 15px; font-weight: 600; color: #eeeeee;">${item.title}</p>
+                    <p style="margin: 0; font-size: 13px; color: #888888;">${item.quantity} × ${item.unitPrice} AED</p>
+                  </td>
+                  <td width="100" align="right" valign="middle">
+                    <p style="margin: 0; font-size: 14px; font-weight: 700; color: #cccccc;">${itemTotal} AED</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
       `;
     }).join('');
   }
@@ -133,44 +145,60 @@ class EmailService {
    * @param {number} totalAmount - Total amount to be paid
    * @returns {string} HTML string for bank transfer info or empty string
    */
-  getBankTransferInfo(paymentMethod, totalAmount) {
+  getBankTransferInfo(paymentMethod, orderId, totalAmount) {
     if (paymentMethod !== 'Bank Transfer') {
       return '';
     }
 
     return `
-      <div class="bank-transfer-section">
-        <div class="bank-transfer-header">
-          <div class="bank-icon">🏦</div>
-          <div class="bank-transfer-title">Bank Transfer Instructions</div>
-        </div>
-        <div class="bank-info">
-          <div class="bank-detail">
-            <div class="bank-detail-label">Bank Name</div>
-            <div class="bank-detail-value">Emirates NBD</div>
-          </div>
-          <div class="bank-detail">
-            <div class="bank-detail-label">Account Name</div>
-            <div class="bank-detail-value">RAKC Bookstore</div>
-          </div>
-          <div class="bank-detail">
-            <div class="bank-detail-label">Account Number</div>
-            <div class="bank-detail-value">1234567890</div>
-          </div>
-          <div class="bank-detail">
-            <div class="bank-detail-label">IBAN</div>
-            <div class="bank-detail-value">AE12 0340 1234 5678 9012 345</div>
-          </div>
-          <div class="bank-detail">
-            <div class="bank-detail-label">Amount to Transfer</div>
-            <div class="bank-detail-value">AED ${totalAmount}</div>
-          </div>
-        </div>
-        <p class="notice-text">
-          📌 Please use your Order ID <strong>${'{{orderId}}'}</strong> as the payment reference.
-          After making the transfer, please send the payment confirmation to our support email.
-        </p>
-      </div>
+      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #3d3000; border: 1px solid #665500; border-radius: 12px; margin-top: 24px;">
+        <tr>
+          <td style="padding: 24px;">
+            
+            <!-- Header -->
+            <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 20px;">
+              <tr>
+                <td width="50" style="font-size: 32px;">🏦</td>
+                <td style="font-size: 16px; font-weight: 700; color: #FFC107; text-transform: uppercase; letter-spacing: 1px;">Bank Transfer Instructions</td>
+              </tr>
+            </table>
+            
+            <!-- Bank Details -->
+            <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #2a2a2a; border: 1px solid #3a3a3a; border-radius: 8px;">
+              <tr>
+                <td style="padding: 12px 16px; border-bottom: 1px solid #3a3a3a;">
+                  <p style="margin: 0 0 4px 0; font-size: 12px; color: #777777; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Bank Name</p>
+                  <p style="margin: 0; font-size: 14px; color: #eeeeee; font-weight: 600; font-family: 'Courier New', monospace;">RAK Bank</p>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding: 12px 16px; border-bottom: 1px solid #3a3a3a;">
+                  <p style="margin: 0 0 4px 0; font-size: 12px; color: #777777; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Account Name</p>
+                  <p style="margin: 0; font-size: 14px; color: #eeeeee; font-weight: 600; font-family: 'Courier New', monospace;">The United Christian Church</p>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding: 12px 16px; border-bottom: 1px solid #3a3a3a;">
+                  <p style="margin: 0 0 4px 0; font-size: 12px; color: #777777; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">IBAN</p>
+                  <p style="margin: 0; font-size: 14px; color: #eeeeee; font-weight: 600; font-family: 'Courier New', monospace;">AE11111111111</p>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding: 12px 16px;">
+                  <p style="margin: 0 0 4px 0; font-size: 12px; color: #777777; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Amount to Transfer</p>
+                  <p style="margin: 0; font-size: 14px; color: #eeeeee; font-weight: 600; font-family: 'Courier New', monospace;">AED ${totalAmount}</p>
+                </td>
+              </tr>
+            </table>
+            
+            <!-- Notice -->
+            <p style="margin: 16px 0 0 0; font-size: 13px; color: #d4a800; line-height: 1.5;">
+              📌 After making the transfer, please send the payment confirmation by replying to this email or via WhatsApp.
+            </p>
+            
+          </td>
+        </tr>
+      </table>
     `;
   }
 
@@ -184,7 +212,8 @@ class EmailService {
     
     // Generate bank transfer info if needed
     const bankTransferInfo = this.getBankTransferInfo(
-      orderData.paymentMethod, 
+      orderData.paymentMethod,
+      orderData.orderId,
       orderData.totalAmount
     );
 

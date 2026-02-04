@@ -1,407 +1,160 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml"
+    xmlns:o="urn:schemas-microsoft-com:office:office">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="x-apple-disable-message-reformatting">
+    <meta name="color-scheme" content="dark light">
+    <meta name="supported-color-schemes" content="dark light">
     <title>Receipt - RAKC Bookstore</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'Roboto', sans-serif;
-            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
-            margin: 0;
-            padding: 40px 20px;
-            line-height: 1.6;
-        }
-        
-        .email-container {
-            max-width: 650px;
-            margin: 0 auto;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 24px;
-            overflow: hidden;
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 
-                        0 0 0 1px rgba(255, 255, 255, 0.1) inset;
-        }
-        
-        .header {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 40px 30px;
-            text-align: center;
-            backdrop-filter: blur(10px);
-        }
-        
-        .success-icon {
-            font-size: 56px;
-            margin: 0 0 16px 0;
-            filter: drop-shadow(0 4px 12px rgba(76, 175, 80, 0.3));
-        }
-        
-        .header h1 {
-            margin: 0;
-            font-size: 32px;
-            font-weight: 700;
-            color: #ffffff;
-            letter-spacing: -0.5px;
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-        }
-        
-        .header p {
-            margin: 8px 0 0 0;
-            font-size: 14px;
-            color: rgba(255, 255, 255, 0.5);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            font-weight: 600;
-        }
-        
-        .content {
-            padding: 40px 30px;
-            color: rgba(255, 255, 255, 0.9);
-        }
-        
-        .greeting {
-            font-size: 18px;
-            color: rgba(255, 255, 255, 0.7);
-            margin-bottom: 24px;
-        }
-        
-        .receipt-box {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            padding: 24px;
-            margin: 24px 0;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-        }
-        
-        .receipt-info {
-            display: table;
-            width: 100%;
-            margin-bottom: 20px;
-        }
-        
-        .receipt-row {
-            display: table-row;
-        }
-        
-        .receipt-label {
-            display: table-cell;
-            padding: 8px 0;
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.4);
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            font-weight: 600;
-            width: 40%;
-        }
-        
-        .receipt-value {
-            display: table-cell;
-            padding: 8px 0;
-            font-size: 14px;
-            color: rgba(255, 255, 255, 0.9);
-            font-weight: 500;
-        }
-        
-        .payment-method-pill {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 600;
-            background: rgba(255, 255, 255, 0.1);
-            color: rgba(255, 255, 255, 0.9);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-        }
-        
-        .divider {
-            height: 1px;
-            background: linear-gradient(90deg, 
-                rgba(255, 255, 255, 0) 0%, 
-                rgba(255, 255, 255, 0.2) 50%, 
-                rgba(255, 255, 255, 0) 100%);
-            margin: 20px 0;
-        }
-        
-        .items-section {
-            margin-top: 20px;
-        }
-        
-        .items-header {
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.4);
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            font-weight: 600;
-            margin-bottom: 12px;
-        }
-        
-        .item {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-        
-        .item-cover {
-            width: 60px;
-            height: 80px;
-            border-radius: 8px;
-            object-fit: cover;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .item-details {
-            flex: 1;
-        }
-        
-        .item-title {
-            font-size: 15px;
-            font-weight: 600;
-            color: rgba(255, 255, 255, 0.95);
-            margin-bottom: 4px;
-        }
-        
-        .item-meta {
-            font-size: 13px;
-            color: rgba(255, 255, 255, 0.5);
-        }
-        
-        .item-price {
-            font-size: 14px;
-            font-weight: 700;
-            color: rgba(255, 255, 255, 0.8);
-            text-align: right;
-        }
-        
-        .total-section {
-            margin-top: 24px;
-            padding-top: 20px;
-            border-top: 2px solid rgba(255, 255, 255, 0.15);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .total-label {
-            font-size: 14px;
-            color: rgba(255, 255, 255, 0.5);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            font-weight: 700;
-        }
-        
-        .total-amount {
-            font-size: 28px;
-            font-weight: 800;
-            color: #4CAF50;
-            text-shadow: 0 2px 10px rgba(76, 175, 80, 0.3);
-            letter-spacing: -0.5px;
-        }
-        
-        .bank-transfer-section {
-            margin-top: 24px;
-            background: rgba(255, 193, 7, 0.08);
-            border: 1px solid rgba(255, 193, 7, 0.3);
-            border-radius: 16px;
-            padding: 24px;
-            backdrop-filter: blur(10px);
-        }
-        
-        .bank-transfer-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-        
-        .bank-icon {
-            font-size: 32px;
-        }
-        
-        .bank-transfer-title {
-            font-size: 16px;
-            font-weight: 700;
-            color: #FFC107;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        
-        .bank-info {
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: 16px;
-        }
-        
-        .bank-detail {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
-        
-        .bank-detail:last-child {
-            border-bottom: none;
-        }
-        
-        .bank-detail-label {
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.4);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-weight: 600;
-        }
-        
-        .bank-detail-value {
-            font-size: 14px;
-            color: rgba(255, 255, 255, 0.95);
-            font-weight: 600;
-            font-family: 'Courier New', monospace;
-        }
-        
-        .notice-text {
-            margin-top: 16px;
-            font-size: 13px;
-            color: rgba(255, 193, 7, 0.8);
-            line-height: 1.5;
-        }
-        
-        .message {
-            font-size: 15px;
-            color: rgba(255, 255, 255, 0.7);
-            margin: 24px 0;
-            line-height: 1.6;
-        }
-        
-        .signature {
-            margin-top: 32px;
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 14px;
-        }
-        
-        .signature strong {
-            color: rgba(255, 255, 255, 0.9);
-            font-weight: 600;
-        }
-        
-        .footer {
-            background: rgba(255, 255, 255, 0.02);
-            border-top: 1px solid rgba(255, 255, 255, 0.08);
-            padding: 24px 30px;
-            text-align: center;
-        }
-        
-        .footer-brand {
-            font-size: 11px;
-            color: rgba(255, 255, 255, 0.4);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-        
-        .footer-contact {
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.3);
-            margin-bottom: 12px;
-        }
-        
-        .footer-contact a {
-            color: rgba(255, 255, 255, 0.6);
-            text-decoration: none;
-            transition: color 0.3s ease;
-        }
-        
-        .footer-contact a:hover {
-            color: rgba(255, 255, 255, 0.9);
-        }
-        
-        .footer-disclaimer {
-            font-size: 11px;
-            color: rgba(255, 255, 255, 0.25);
-            font-style: italic;
-        }
-    </style>
+    <!--[if mso]>
+    <noscript>
+        <xml>
+            <o:OfficeDocumentSettings>
+                <o:PixelsPerInch>96</o:PixelsPerInch>
+            </o:OfficeDocumentSettings>
+        </xml>
+    </noscript>
+    <![endif]-->
 </head>
-<body>
-    <div class="email-container">
-        <div class="header">
-            <div class="success-icon">✅</div>
-            <h1>Receipt</h1>
-            <p>RAKC Bookstore</p>
-        </div>
-        
-        <div class="content">
-            <p class="greeting">Dear {{customerName}},</p>
-            <p class="message">Thank you for your purchase! Here are your transaction details:</p>
-            
-            <div class="receipt-box">
-                <div class="receipt-info">
-                    <div class="receipt-row">
-                        <div class="receipt-label">Order ID</div>
-                        <div class="receipt-value">{{orderId}}</div>
-                    </div>
-                    <div class="receipt-row">
-                        <div class="receipt-label">Date</div>
-                        <div class="receipt-value">{{orderDate}}</div>
-                    </div>
-                    <div class="receipt-row">
-                        <div class="receipt-label">Payment Method</div>
-                        <div class="receipt-value">
-                            <span class="payment-method-pill">{{paymentMethod}}</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="divider"></div>
-                
-                <div class="items-section">
-                    <div class="items-header">Items Purchased</div>
-                    {{orderItems}}
-                </div>
-                
-                <div class="total-section">
-                    <div class="total-label">Total</div>
-                    <div class="total-amount">AED {{totalAmount}}</div>
-                </div>
-            </div>
-            
-            {{bankTransferInfo}}
-            
-            <p class="message">We appreciate your business and look forward to serving you again!</p>
-            
-            <div class="signature">
-                Best regards,<br>
-                <strong>RAKC Bookstore Team</strong>
-            </div>
-        </div>
-        
-        <div class="footer">
-            <div class="footer-brand">RAKC Bookstore</div>
-            <div class="footer-contact">
-                <a href="mailto:support@rakcbookstore.com">support@rakcbookstore.com</a>
-            </div>
-            <div class="footer-disclaimer">
-                This is an automated email. Please do not reply directly to this message.
-            </div>
-        </div>
-    </div>
+
+<body
+    style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
+
+    <!-- Wrapper Table -->
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #0a0a0a;">
+        <tr>
+            <td align="center" style="padding: 40px 20px;">
+
+                <!-- Email Container -->
+                <table role="presentation" cellpadding="0" cellspacing="0" width="600"
+                    style="max-width: 600px; background-color: #1a1a1a; border: 1px solid #333333; border-radius: 16px;">
+
+                    <!-- Header -->
+                    <tr>
+                        <td align="center"
+                            style="background-color: #242424; padding: 40px 30px; border-radius: 16px 16px 0 0; border-bottom: 1px solid #333333;">
+                            <h1
+                                style="margin: 0; font-size: 32px; font-weight: 700; color: #ffffff; letter-spacing: -0.5px;">
+                                📜 Receipt</h1>
+                            <p
+                                style="margin: 8px 0 0 0; font-size: 14px; color: #888888; text-transform: uppercase; letter-spacing: 2px; font-weight: 600;">
+                                RAK Church Books</p>
+                        </td>
+                    </tr>
+
+                    <!-- Content -->
+                    <tr>
+                        <td style="padding: 40px 30px;">
+
+                            <!-- Greeting -->
+                            <p style="margin: 0 0 24px 0; font-size: 18px; color: #cccccc;">Dear {{customerName}},</p>
+                            <p style="margin: 0 0 24px 0; font-size: 15px; color: #aaaaaa; line-height: 1.6;">We hope
+                                you love your new books! Here are your transaction details:</p>
+
+                            <!-- Receipt Box -->
+                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%"
+                                style="background-color: #252525; border: 1px solid #3a3a3a; border-radius: 12px; margin: 24px 0;">
+                                <tr>
+                                    <td style="padding: 24px;">
+
+                                        <!-- Order Details -->
+                                        <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                            <tr>
+                                                <td width="40%"
+                                                    style="padding: 8px 0; font-size: 12px; color: #777777; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600;">
+                                                    Order ID</td>
+                                                <td
+                                                    style="padding: 8px 0; font-size: 14px; color: #eeeeee; font-weight: 500;">
+                                                    {{orderId}}</td>
+                                            </tr>
+                                            <tr>
+                                                <td width="40%"
+                                                    style="padding: 8px 0; font-size: 12px; color: #777777; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600;">
+                                                    Date</td>
+                                                <td
+                                                    style="padding: 8px 0; font-size: 14px; color: #eeeeee; font-weight: 500;">
+                                                    {{orderDate}}</td>
+                                            </tr>
+                                            <tr>
+                                                <td width="40%"
+                                                    style="padding: 8px 0; font-size: 12px; color: #777777; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600;">
+                                                    Payment Method</td>
+                                                <td style="padding: 8px 0;">
+                                                    <span
+                                                        style="display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; background-color: #333333; color: #eeeeee; border: 1px solid #444444;">{{paymentMethod}}</span>
+                                                </td>
+                                            </tr>
+                                        </table>
+
+                                        <!-- Divider -->
+                                        <table role="presentation" cellpadding="0" cellspacing="0" width="100%"
+                                            style="margin: 20px 0;">
+                                            <tr>
+                                                <td style="height: 1px; background-color: #3a3a3a;"></td>
+                                            </tr>
+                                        </table>
+
+                                        <!-- Items Section -->
+                                        <p
+                                            style="margin: 0 0 12px 0; font-size: 12px; color: #777777; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600;">
+                                            Items Purchased</p>
+
+                                        {{orderItems}}
+
+                                        <!-- Total Section -->
+                                        <table role="presentation" cellpadding="0" cellspacing="0" width="100%"
+                                            style="margin-top: 24px; border-top: 2px solid #444444;">
+                                            <tr>
+                                                <td
+                                                    style="padding-top: 20px; font-size: 14px; color: #888888; text-transform: uppercase; letter-spacing: 2px; font-weight: 700;">
+                                                    Total</td>
+                                                <td align="right"
+                                                    style="padding-top: 20px; font-size: 28px; font-weight: 800; color: #4CAF50; letter-spacing: -0.5px;">
+                                                    AED {{totalAmount}}</td>
+                                            </tr>
+                                        </table>
+
+                                    </td>
+                                </tr>
+                            </table>
+
+                            {{bankTransferInfo}}
+
+                            <!-- Closing Message -->
+                            <p style="margin: 24px 0; font-size: 15px; color: #aaaaaa; line-height: 1.6;">We look
+                                forward to serving you again!</p>
+
+                            <!-- Signature -->
+                            <p style="margin: 32px 0 0 0; font-size: 14px; color: #999999;">
+                                Best regards,<br>
+                                <strong style="color: #eeeeee; font-weight: 600;">The RAK Church Books Team</strong>
+                            </p>
+
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td align="center"
+                            style="background-color: #151515; padding: 24px 30px; border-top: 1px solid #2a2a2a; border-radius: 0 0 16px 16px;">
+                            <p
+                                style="margin: 0 0 8px 0; font-size: 11px; color: #666666; text-transform: uppercase; letter-spacing: 2px; font-weight: 700;">
+                                RAK Church Books</p>
+                            <p style="margin: 0; font-size: 11px; color: #555555; font-style: italic;">This is an
+                                automated email.</p>
+                        </td>
+                    </tr>
+
+                </table>
+
+            </td>
+        </tr>
+    </table>
+
 </body>
+
 </html>

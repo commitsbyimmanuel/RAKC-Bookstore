@@ -178,11 +178,18 @@ export default function Reports() {
       
       const dayKey = saleDate.toISOString().split("T")[0];
       if (!dailyData[dayKey]) {
-        dailyData[dayKey] = { date: dayKey, transactions: 0, totalAmount: 0, books: 0 };
+        dailyData[dayKey] = { date: dayKey, transactions: 0, books: 0, cashAmount: 0, bankTransferAmount: 0, totalAmount: 0 };
       }
       dailyData[dayKey].transactions += 1;
-      dailyData[dayKey].totalAmount += sale.totalAmount || 0;
       dailyData[dayKey].books += sale.items?.reduce((sum, item) => sum + (item.quantity || 1), 0) || 0;
+      
+      const amount = sale.totalAmount || 0;
+      if (sale.paymentMethod === "Bank Transfer") {
+        dailyData[dayKey].bankTransferAmount += amount;
+      } else {
+        dailyData[dayKey].cashAmount += amount;
+      }
+      dailyData[dayKey].totalAmount += amount;
     });
 
     return Object.values(dailyData).sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -341,6 +348,8 @@ export default function Reports() {
                   <th className="text-left py-3 px-4 text-white/60 font-medium">Date</th>
                   <th className="text-right py-3 px-4 text-white/60 font-medium">Transactions</th>
                   <th className="text-right py-3 px-4 text-white/60 font-medium">Books Sold</th>
+                  <th className="text-right py-3 px-4 text-white/60 font-medium">Amount in Cash</th>
+                  <th className="text-right py-3 px-4 text-white/60 font-medium">Bank Transfer Amount</th>
                   <th className="text-right py-3 px-4 text-white/60 font-medium">Total Amount</th>
                 </tr>
               </thead>
@@ -350,6 +359,8 @@ export default function Reports() {
                     <td className="py-3 px-4 text-white">{formatDateDisplay(row.date)}</td>
                     <td className="py-3 px-4 text-white text-right">{row.transactions}</td>
                     <td className="py-3 px-4 text-white text-right">{row.books}</td>
+                    <td className="py-3 px-4 text-white text-right">AED {row.cashAmount.toFixed(0)}</td>
+                    <td className="py-3 px-4 text-white text-right">AED {row.bankTransferAmount.toFixed(0)}</td>
                     <td className="py-3 px-4 text-white text-right">AED {row.totalAmount.toFixed(0)}</td>
                   </tr>
                 ))}

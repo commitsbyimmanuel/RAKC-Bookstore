@@ -180,7 +180,7 @@ class EmailService {
               <tr>
                 <td style="padding: 12px 16px; border-bottom: 1px solid #3a3a3a;">
                   <p style="margin: 0 0 4px 0; font-size: 12px; color: #777777; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">IBAN</p>
-                  <p style="margin: 0; font-size: 14px; color: #eeeeee; font-weight: 600; font-family: 'Courier New', monospace;">AE11111111111</p>
+                  <p style="margin: 0; font-size: 14px; color: #eeeeee; font-weight: 600; font-family: 'Courier New', monospace;">AE960400000052090013001</p>
                 </td>
               </tr>
               <tr>

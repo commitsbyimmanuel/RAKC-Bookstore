@@ -5,8 +5,8 @@ import BookOnShelf from "../ui/BookOnShelf";
 import Button from "../ui/Button";
 
 export default function Stock() {
-  const [isbn, setIsbn] = useState("");
-  const [searchISBN, setSearchISBN] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedBook, setSelectedBook] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [location, setLocation] = useState("");
   const [locationError, setLocationError] = useState("");
@@ -15,34 +15,39 @@ export default function Stock() {
   const [highlightedISBN, setHighlightedISBN] = useState(null);
   
   const { data: allStock = [], isLoading: isLoadingStock, isError: isStockError } = useBooks();
-  const { data: book, isLoading: isLookingUp, isError: isLookupError, error } = useBookLookup(searchISBN);
   const addBookMutation = useAddBook();
   const updateBookMutation = useUpdateBook();
   
   const observerTarget = useRef(null);
   const ITEMS_PER_PAGE = 5;
 
-  // Auto-search when ISBN reaches 13 digits
+  // Auto-select when ISBN is scanned/typed and found locally
   useEffect(() => {
-    const cleanISBN = isbn.replace(/[-\s]/g, "");
-    if (cleanISBN.length === 13) {
-      setSearchISBN(cleanISBN);
+    const cleanSearch = searchQuery.replace(/[-\s]/g, "");
+    if (cleanSearch.length === 10 || cleanSearch.length === 13) {
+      const found = allStock.find(b => 
+        b.isbn.replace(/[-\s]/g, "") === cleanSearch
+      );
+      if (found) {
+        setSelectedBook(found);
+      }
     }
-  }, [isbn]);
+  }, [searchQuery, allStock]);
 
-  // Sync state when book is found in local stock
+  // Sync state when book is selected
   useEffect(() => {
-    if (book && book.source === "local") {
-      setQuantity(book.stock || 0);
-      setLocation(book.location || "");
-      setPrice(book.price?.toString() || "");
+    if (selectedBook) {
+      // Default to 1 for adding/updating stock
+      setQuantity(1);
+      setLocation(selectedBook.location || "");
+      setPrice(selectedBook.price?.toString() || "");
     } else {
       setQuantity(1);
       setLocation("");
       setPrice("");
     }
     setLocationError("");
-  }, [book]);
+  }, [selectedBook]);
 
   // Infinite scroll observer
   useEffect(() => {
@@ -75,46 +80,21 @@ export default function Stock() {
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
-      const cleanISBN = isbn.replace(/[-\s]/g, "");
-      if (cleanISBN.length >= 10) {
-        setSearchISBN(cleanISBN);
+      // Already handled by auto-select useEffect, or just clear if not found
+      if (!selectedBook && (searchQuery.length === 10 || searchQuery.length === 13)) {
+        console.log("Book not found in local stock");
       }
     }
   };
 
   const handleAddBook = async () => {
-    if (!book || book.source === "local") return;
-    
-    const error = validateLocation(location);
-    if (error) {
-      setLocationError(error);
-      return;
-    }
-
-    try {
-      await addBookMutation.mutateAsync({
-        isbn: book.isbn,
-        title: book.title,
-        authors: book.authors,
-        coverUrl: book.coverUrl,
-        stock: quantity,
-        location: location.toUpperCase(),
-        price: parseFloat(price) || 0,
-      });
-      
-      // Reset form
-      setIsbn("");
-      setSearchISBN("");
-      setQuantity(1);
-      setLocation("");
-      setPrice("");
-    } catch (err) {
-      console.error("Failed to add book:", err);
-    }
+    // Adding new books is disabled on Stock page per local-only requirement
+    // But we keep the logic structure in case it's needed elsewhere
+    return;
   };
 
   const handleUpdateStock = async () => {
-    if (!book || book.source !== "local") return;
+    if (!selectedBook) return;
     
     const error = validateLocation(location);
     if (error) {
@@ -124,22 +104,22 @@ export default function Stock() {
 
     try {
       // Calculate new stock as current stock + quantity entered
-      const updatedStock = (book.stock || 0) + quantity;
+      const updatedStock = (selectedBook.stock || 0) + quantity;
       
       await updateBookMutation.mutateAsync({
-        id: book.id,
+        id: selectedBook.id,
         stock: updatedStock,
         location: location.toUpperCase(),
-        price: parseFloat(price) || book.price || 0,
+        price: parseFloat(price) || selectedBook.price || 0,
       });
       
       // Highlight the book in the list
-      setHighlightedISBN(book.isbn);
+      setHighlightedISBN(selectedBook.isbn);
       setTimeout(() => setHighlightedISBN(null), 3000);
       
       // Clear panel and reset state
-      setIsbn("");
-      setSearchISBN("");
+      setSearchQuery("");
+      setSelectedBook(null);
       setQuantity(1);
       setLocation("");
       setLocationError("");
@@ -150,9 +130,17 @@ export default function Stock() {
   };
 
   // Filter and paginate stock
-  const filteredStock = highlightedISBN 
-    ? allStock.filter(item => item.isbn === highlightedISBN)
-    : allStock;
+  const filteredStock = allStock.filter(item => {
+    if (highlightedISBN && item.isbn === highlightedISBN) return true;
+    if (highlightedISBN) return false;
+
+    const query = searchQuery.toLowerCase();
+    return (
+      item.title.toLowerCase().includes(query) ||
+      item.isbn.includes(query) ||
+      item.authors.some(a => a.toLowerCase().includes(query))
+    );
+  });
   
   const displayedStock = filteredStock.slice(0, page * ITEMS_PER_PAGE);
 
@@ -187,14 +175,14 @@ export default function Stock() {
     <div className="w-full h-full flex flex-col gap-5">
       <h1 className="text-2xl">Stock Management</h1>
       
-      {/* ISBN Scanner Section */}
+      {/* Search Bar Section */}
       <div className="rounded-2xl border border-white/20 bg-white/5 backdrop-blur p-4">
         <input
           type="text"
-          value={isbn}
-          onChange={(e) => setIsbn(e.target.value)}
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Scan or type ISBN to add/update stock..."
+          placeholder="Search by title, author, or ISBN..."
           className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-2
                      text-white placeholder:text-white/30 focus:outline-none 
                      focus:ring-2 focus:ring-white/20 focus:bg-white/10 transition-all font-mono text-sm shadow-inner"
@@ -203,14 +191,14 @@ export default function Stock() {
       </div>
 
       {/* Book Details Panel */}
-      {book && !isLookingUp && (
+      {selectedBook && (
         <div className="rounded-2xl border border-white/20 bg-white/5 backdrop-blur p-6 animate-in fade-in zoom-in-95">
           <div className="flex gap-6">
             {/* Book Cover */}
-            {book.coverUrl && (
+            {selectedBook.coverUrl && (
               <img
-                src={book.coverUrl}
-                alt={book.title}
+                src={selectedBook.coverUrl}
+                alt={selectedBook.title}
                 className="w-24 h-32 rounded-xl object-cover shadow-lg ring-1 ring-white/20"
               />
             )}
@@ -218,20 +206,18 @@ export default function Stock() {
             {/* Book Info & Controls */}
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
-                <span className={`px-2 py-1 rounded-md text-[10px] uppercase font-bold tracking-tighter ${
-                  book.source === 'local' ? 'bg-green-500/20 text-green-400' : 'bg-amber-500/20 text-amber-400'
-                }`}>
-                  {book.source === 'local' ? 'IN STOCK' : 'NOT IN STOCK'}
+                <span className="px-2 py-1 rounded-md text-[10px] uppercase font-bold tracking-tighter bg-green-500/20 text-green-400">
+                  IN STOCK
                 </span>
               </div>
-              <h3 className="text-xl font-bold text-white mb-1">{book.title}</h3>
-              <p className="text-sm text-white/60 mb-4">{book.authors?.join(", ")}</p>
+              <h3 className="text-xl font-bold text-white mb-1">{selectedBook.title}</h3>
+              <p className="text-sm text-white/60 mb-4">{selectedBook.authors?.join(", ")}</p>
               
-              <div className={`grid gap-3 ${book.source === 'local' ? 'grid-cols-4' : 'grid-cols-3'}`}>
+              <div className="grid gap-3 grid-cols-4">
                 {/* Quantity Control */}
                 <div>
                   <label className="block text-xs font-medium text-white/30 uppercase tracking-widest mb-2">
-                    {book.source === 'local' ? 'New Stock' : 'Quantity'}
+                    New Stock
                   </label>
                   <div className="flex w-full justify-between gap-2 bg-white/10 p-1.5 rounded-2xl backdrop-blur-md border border-white/20">
                     <button 
@@ -252,17 +238,15 @@ export default function Stock() {
                   </div>
                 </div>
 
-                {/* Current Stock Display (for existing books only) */}
-                {book.source === 'local' && (
-                  <div>
-                    <label className="block text-xs font-medium text-white/30 uppercase tracking-widest mb-2">
-                      Current Stock
-                    </label>
-                    <div className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 h-[46px] flex items-center justify-center text-white/70 font-mono text-lg">
-                      {book.stock}
-                    </div>
+                {/* Current Stock Display */}
+                <div>
+                  <label className="block text-xs font-medium text-white/30 uppercase tracking-widest mb-2">
+                    Current Stock
+                  </label>
+                  <div className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 h-[46px] flex items-center justify-center text-white/70 font-mono text-lg">
+                    {selectedBook.stock}
                   </div>
-                )}
+                </div>
 
                 {/* Location Input */}
                 <div>
@@ -313,8 +297,8 @@ export default function Stock() {
                 <Button
                   variant="secondary"
                   onClick={() => {
-                    setIsbn("");
-                    setSearchISBN("");
+                    setSearchQuery("");
+                    setSelectedBook(null);
                     setQuantity(1);
                     setLocation("");
                   }}
@@ -323,45 +307,23 @@ export default function Stock() {
                   Cancel
                 </Button>
                 
-                {book.source === 'local' ? (
-                  <Button
-                    variant="primary"
-                    onClick={handleUpdateStock}
-                    disabled={updateBookMutation.isPending}
-                    className="flex-[2] h-12"
-                  >
-                    {updateBookMutation.isPending ? "Updating..." : "Update Stock & Location"}
-                  </Button>
-                ) : (
-                  <Button
-                    variant="primary"
-                    onClick={handleAddBook}
-                    disabled={addBookMutation.isPending}
-                    className="flex-[2] h-12"
-                  >
-                    {addBookMutation.isPending ? "Adding..." : "Add to Stock"}
-                  </Button>
-                )}
+                <Button
+                  variant="primary"
+                  onClick={handleUpdateStock}
+                  disabled={updateBookMutation.isPending}
+                  className="flex-[2] h-12"
+                >
+                  {updateBookMutation.isPending ? "Updating..." : "Update Stock & Location"}
+                </Button>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {isLookingUp && (
-        <div className="rounded-2xl border border-white/20 bg-white/5 backdrop-blur p-6">
-          <div className="flex items-center justify-center gap-3 text-white/60">
-            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            <span>Looking up book...</span>
-          </div>
-        </div>
-      )}
+      {/* Global Lookup status (Removed) */}
 
-      {isLookupError && (
-        <div className="rounded-2xl border border-red-500/20 bg-red-500/10 backdrop-blur p-4 text-red-400 text-center">
-          {error?.message || "Error looking up book"}
-        </div>
-      )}
+
 
       {/* Stock List */}
       <div className="flex-1">
@@ -379,9 +341,18 @@ export default function Stock() {
           {displayedStock.map((entry) => (
             <div
               key={entry.isbn}
-              className={`py-3 px-4 items-center flex justify-between rounded-2xl transition-all ${
+              onClick={() => {
+                setSelectedBook(entry)
+                window.scrollTo({
+                  top: 0,
+                  behavior: 'smooth'
+                });
+              }}
+              className={`py-3 px-4 items-center flex justify-between rounded-2xl cursor-pointer transition-all ${
                 entry.isbn === highlightedISBN 
                   ? 'bg-orange-500/20 border border-orange-500/40' 
+                  : entry === selectedBook
+                  ? 'bg-white/20 border border-white/40 ring-1 ring-white/20'
                   : 'bg-white/5 border border-white/10 hover:bg-white/10'
               }`}
             >

@@ -30,7 +30,7 @@ services:
 
   # Frontend Web Application
   frontend:
-    image: ghcr.io/commitsbyimmanuel/rakc-bookstore-frontend:v1.0.0
+    image: ghcr.io/commitsbyimmanuel/rakc-bookstore-frontend:v1.0.1
     container_name: rakc-frontend
     restart: unless-stopped
     environment:
@@ -55,7 +55,7 @@ services:
 
   # Email Service
   email-service:
-    image: ghcr.io/commitsbyimmanuel/rakc-bookstore-email-service:v1.0.0
+    image: ghcr.io/commitsbyimmanuel/rakc-bookstore-email-service:v1.0.1
     container_name: rakc-email-service
     restart: unless-stopped
     env_file:

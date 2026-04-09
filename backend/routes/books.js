@@ -3,15 +3,27 @@ import Book from '../models/Book.js';
 
 const router = express.Router();
 
-// GET all books (with optional query filters)
+// GET all books (with optional query filters and search)
 router.get('/', async (req, res) => {
   try {
-    const query = {};
+    let query = {};
     
-    // Support query parameters for filtering (like json-server)
-    Object.keys(req.query).forEach(key => {
-      query[key] = req.query[key];
-    });
+    // Support general search across multiple fields
+    if (req.query.search) {
+      const searchStr = req.query.search;
+      query = {
+        $or: [
+          { isbn: { $regex: searchStr, $options: 'i' } },
+          { title: { $regex: searchStr, $options: 'i' } },
+          { authors: { $regex: searchStr, $options: 'i' } }
+        ]
+      };
+    } else {
+      // Support specific field filtering (like json-server)
+      Object.keys(req.query).forEach(key => {
+        query[key] = req.query[key];
+      });
+    }
     
     const books = await Book.find(query).select('-_id -__v');
     res.json(books);

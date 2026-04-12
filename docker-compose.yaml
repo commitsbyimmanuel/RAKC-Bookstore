@@ -15,7 +15,7 @@ services:
 
   # Backend API Service
   backend:
-    image: ghcr.io/commitsbyimmanuel/rakc-bookstore-backend:v1.0.0
+    image: ghcr.io/commitsbyimmanuel/rakc-bookstore-backend:v1.0.1
     container_name: rakc-backend
     restart: unless-stopped
     ports:
@@ -23,6 +23,7 @@ services:
     environment:
       - MONGODB_URI=mongodb://mongodb:27017/Bookstore
       - PORT=3001
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
     depends_on:
       - mongodb
     networks:

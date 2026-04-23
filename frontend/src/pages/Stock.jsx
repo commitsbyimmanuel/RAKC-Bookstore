@@ -13,26 +13,44 @@ export default function Stock() {
   const [price, setPrice] = useState("");
   const [page, setPage] = useState(1);
   const [highlightedISBN, setHighlightedISBN] = useState(null);
+  const [isbnToLookup, setIsbnToLookup] = useState("");
   
   const { data: allStock = [], isLoading: isLoadingStock, isError: isStockError } = useBooks();
   const addBookMutation = useAddBook();
   const updateBookMutation = useUpdateBook();
   
+  // Global book lookup (Google Books / Open Library fallback)
+  const { data: lookupResult, isLoading: isLookingUp, isError: isLookupError } = useBookLookup(isbnToLookup);
+
   const observerTarget = useRef(null);
   const ITEMS_PER_PAGE = 5;
 
-  // Auto-select when ISBN is scanned/typed and found locally
+  // Determine if the search query looks like an ISBN
+  const cleanSearch = searchQuery.replace(/[-\s]/g, "");
+  const isISBN = cleanSearch.length === 10 || cleanSearch.length === 13;
+
+  // Auto-select when ISBN is scanned/typed — if found locally, select it;
+  // if it's a 13-digit numeric ISBN (barcode scan) and not local, auto-lookup externally
   useEffect(() => {
-    const cleanSearch = searchQuery.replace(/[-\s]/g, "");
-    if (cleanSearch.length === 10 || cleanSearch.length === 13) {
+    if (isISBN) {
       const found = allStock.find(b => 
         b.isbn.replace(/[-\s]/g, "") === cleanSearch
       );
       if (found) {
         setSelectedBook(found);
+        setIsbnToLookup(""); // Clear any pending external lookup
+      } else if (cleanSearch.length === 13 && /^\d+$/.test(cleanSearch)) {
+        setIsbnToLookup(cleanSearch);
       }
     }
   }, [searchQuery, allStock]);
+
+  // When lookup returns a result from external API, select it
+  useEffect(() => {
+    if (lookupResult && lookupResult.source !== "local") {
+      setSelectedBook(lookupResult);
+    }
+  }, [lookupResult]);
 
   // Sync state when book is selected
   useEffect(() => {
@@ -79,18 +97,57 @@ export default function Stock() {
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === "Enter") {
-      // Already handled by auto-select useEffect, or just clear if not found
-      if (!selectedBook && (searchQuery.length === 10 || searchQuery.length === 13)) {
-        console.log("Book not found in local stock");
+    if (e.key === "Enter" && isISBN) {
+      // If book not found locally, trigger external lookup
+      const found = allStock.find(b => 
+        b.isbn.replace(/[-\s]/g, "") === cleanSearch
+      );
+      if (!found) {
+        setIsbnToLookup(cleanSearch);
       }
     }
   };
 
   const handleAddBook = async () => {
-    // Adding new books is disabled on Stock page per local-only requirement
-    // But we keep the logic structure in case it's needed elsewhere
-    return;
+    if (!selectedBook) return;
+    
+    const error = validateLocation(location);
+    if (error) {
+      setLocationError(error);
+      return;
+    }
+
+    try {
+      await addBookMutation.mutateAsync({
+        isbn: selectedBook.isbn,
+        title: selectedBook.title,
+        authors: selectedBook.authors || [],
+        description: selectedBook.description || "",
+        publisher: selectedBook.publisher || "",
+        publishedDate: selectedBook.publishedDate || "",
+        pageCount: selectedBook.pageCount || 0,
+        categories: selectedBook.categories || [],
+        coverUrl: selectedBook.coverUrl || "",
+        stock: quantity,
+        location: location.toUpperCase(),
+        price: parseFloat(price) || 0,
+      });
+      
+      // Highlight the book in the list
+      setHighlightedISBN(selectedBook.isbn);
+      setTimeout(() => setHighlightedISBN(null), 3000);
+      
+      // Clear panel and reset state
+      setSearchQuery("");
+      setSelectedBook(null);
+      setIsbnToLookup("");
+      setQuantity(1);
+      setLocation("");
+      setLocationError("");
+      setPrice("");
+    } catch (err) {
+      console.error("Failed to add book:", err);
+    }
   };
 
   const handleUpdateStock = async () => {
@@ -120,6 +177,7 @@ export default function Stock() {
       // Clear panel and reset state
       setSearchQuery("");
       setSelectedBook(null);
+      setIsbnToLookup("");
       setQuantity(1);
       setLocation("");
       setLocationError("");
@@ -128,6 +186,9 @@ export default function Stock() {
       console.error("Failed to update stock:", err);
     }
   };
+
+  // Whether the selected book is from an external source (not yet in our DB)
+  const isExternalBook = selectedBook && (selectedBook.source === "google_books" || selectedBook.source === "open_library");
 
   // Filter and paginate stock
   const filteredStock = allStock.filter(item => {
@@ -188,7 +249,32 @@ export default function Stock() {
                      focus:ring-2 focus:ring-white/20 focus:bg-white/10 transition-all font-mono text-sm shadow-inner"
           autoFocus
         />
+        {isISBN && !selectedBook && (
+          <p className="text-xs text-white/40 mt-2 ml-1">
+            Press Enter to look up this ISBN from Google Books / Open Library
+          </p>
+        )}
       </div>
+
+      {/* External Lookup Status */}
+      {isLookingUp && (
+        <div className="rounded-2xl border border-blue-500/30 bg-blue-500/10 backdrop-blur p-4 flex items-center gap-3">
+          <div className="w-5 h-5 border-2 border-blue-400/30 border-t-blue-400 rounded-full animate-spin" />
+          <span className="text-blue-300 text-sm">Looking up ISBN in Google Books &amp; Open Library...</span>
+        </div>
+      )}
+
+      {isLookupError && (
+        <div className="rounded-2xl border border-red-500/30 bg-red-500/10 backdrop-blur p-4">
+          <span className="text-red-300 text-sm">Failed to look up book. Please check the ISBN and try again.</span>
+        </div>
+      )}
+
+      {isbnToLookup && !isLookingUp && !lookupResult && !isLookupError && (
+        <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 backdrop-blur p-4">
+          <span className="text-amber-300 text-sm">No book found for ISBN "{isbnToLookup}" in any source.</span>
+        </div>
+      )}
 
       {/* Book Details Panel */}
       {selectedBook && (
@@ -206,9 +292,15 @@ export default function Stock() {
             {/* Book Info & Controls */}
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
-                <span className="px-2 py-1 rounded-md text-[10px] uppercase font-bold tracking-tighter bg-green-500/20 text-green-400">
-                  IN STOCK
-                </span>
+                {isExternalBook ? (
+                  <span className="px-2 py-1 rounded-md text-[10px] uppercase font-bold tracking-tighter bg-blue-500/20 text-blue-400">
+                    NEW — {selectedBook.source === "google_books" ? "Google Books" : "Open Library"}
+                  </span>
+                ) : (
+                  <span className="px-2 py-1 rounded-md text-[10px] uppercase font-bold tracking-tighter bg-green-500/20 text-green-400">
+                    IN STOCK
+                  </span>
+                )}
               </div>
               <h3 className="text-xl font-bold text-white mb-1">{selectedBook.title}</h3>
               <p className="text-sm text-white/60 mb-4">{selectedBook.authors?.join(", ")}</p>
@@ -217,7 +309,7 @@ export default function Stock() {
                 {/* Quantity Control */}
                 <div>
                   <label className="block text-xs font-medium text-white/30 uppercase tracking-widest mb-2">
-                    New Stock
+                    {isExternalBook ? "Stock" : "New Stock"}
                   </label>
                   <div className="flex w-full justify-between gap-2 bg-white/10 p-1.5 rounded-2xl backdrop-blur-md border border-white/20">
                     <button 
@@ -239,14 +331,16 @@ export default function Stock() {
                 </div>
 
                 {/* Current Stock Display */}
-                <div>
-                  <label className="block text-xs font-medium text-white/30 uppercase tracking-widest mb-2">
-                    Current Stock
-                  </label>
-                  <div className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 h-[46px] flex items-center justify-center text-white/70 font-mono text-lg">
-                    {selectedBook.stock}
+                {!isExternalBook && (
+                  <div>
+                    <label className="block text-xs font-medium text-white/30 uppercase tracking-widest mb-2">
+                      Current Stock
+                    </label>
+                    <div className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 h-[46px] flex items-center justify-center text-white/70 font-mono text-lg">
+                      {selectedBook.stock}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Location Input */}
                 <div>
@@ -299,6 +393,7 @@ export default function Stock() {
                   onClick={() => {
                     setSearchQuery("");
                     setSelectedBook(null);
+                    setIsbnToLookup("");
                     setQuantity(1);
                     setLocation("");
                   }}
@@ -307,23 +402,30 @@ export default function Stock() {
                   Cancel
                 </Button>
                 
-                <Button
-                  variant="primary"
-                  onClick={handleUpdateStock}
-                  disabled={updateBookMutation.isPending}
-                  className="flex-[2] h-12"
-                >
-                  {updateBookMutation.isPending ? "Updating..." : "Update Stock & Location"}
-                </Button>
+                {isExternalBook ? (
+                  <Button
+                    variant="primary"
+                    onClick={handleAddBook}
+                    disabled={addBookMutation.isPending}
+                    className="flex-[2] h-12"
+                  >
+                    {addBookMutation.isPending ? "Adding..." : "Add to Stock"}
+                  </Button>
+                ) : (
+                  <Button
+                    variant="primary"
+                    onClick={handleUpdateStock}
+                    disabled={updateBookMutation.isPending}
+                    className="flex-[2] h-12"
+                  >
+                    {updateBookMutation.isPending ? "Updating..." : "Update Stock & Location"}
+                  </Button>
+                )}
               </div>
             </div>
           </div>
         </div>
       )}
-
-      {/* Global Lookup status (Removed) */}
-
-
 
       {/* Stock List */}
       <div className="flex-1">

@@ -25,7 +25,7 @@ services:
     ports:
       - "3001:3001"
     environment:
-      - MONGODB_URI=mongodb://mongodb:27017/Bookstore
+      - MONGODB_URI=mongodb://appuser:${APPUSER_PASSWORD}@mongodb:27017/Bookstore
       - PORT=3001
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
     depends_on:

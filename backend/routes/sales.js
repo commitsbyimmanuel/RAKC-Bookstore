@@ -116,7 +116,8 @@ router.post('/', async (req, res) => {
             orderDate: savedSale.purchaseDate,
             paymentMethod: savedSale.paymentMethod,
             orderItems: savedSale.items,
-            totalAmount: savedSale.totalAmount
+            totalAmount: savedSale.totalAmount,
+            notes: savedSale.notes
           }
         });
       } catch (emailError) {

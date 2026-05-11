@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { usePayments, useUpdatePayment } from "../services/localAPI";
 import PaymentModal from "../ui/PaymentModal";
+import { createPortal } from "react-dom";
 
 export default function Payments() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -268,12 +269,13 @@ export default function Payments() {
         ))}
       </div>
       
-      {selectedPayment && (
+      {selectedPayment && createPortal(
         <PaymentModal
           payment={selectedPayment}
           onClose={() => setSelectedPayment(null)}
           onConfirm={handlePaymentConfirm}
-        />
+        />,
+        document.body
       )}
     </div>
   );

@@ -59,6 +59,14 @@ export default function PaymentModal({ payment, onClose, onConfirm }) {
             <span className="text-white/80">Amount Pending:</span>
             <span className="font-bold text-amber-400">AED {pendingAmount}</span>
           </div>
+          {payment.notes && (
+            <div className="mt-4 rounded-xl bg-white/5 border border-white/10 p-4">
+              <span className="text-xs font-medium text-white/40 uppercase tracking-wider block mb-2">Notes</span>
+              <div className="text-sm text-white/80 whitespace-pre-wrap overflow-y-auto max-h-32 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
+                {payment.notes}
+              </div>
+            </div>
+          )}
         </div>
 
         {isBankTransfer ? (

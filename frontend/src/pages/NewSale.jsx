@@ -15,6 +15,7 @@ export default function NewSale() {
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [customerEmail, setCustomerEmail] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
+  const [notes, setNotes] = useState("");
   const [purchaseDate, setPurchaseDate] = useState(new Date());
   const [cart, setCart] = useState([]);
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
@@ -168,6 +169,7 @@ export default function NewSale() {
         paymentStatus: paymentStatus,
         purchaseDate: formatDate(purchaseDate),
         soldAt: new Date().toISOString(),
+        notes: notes,
       });
 
       // Update stock for each item
@@ -460,6 +462,21 @@ export default function NewSale() {
                             text-white/50 font-mono shadow-inner cursor-not-allowed">
                 {formatDate(purchaseDate)}
               </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-white/30 uppercase tracking-widest mb-3">
+                NOTES (Optional)
+              </label>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Enter order notes, if any..."
+                rows={3}
+                className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3 
+                           text-white placeholder:text-white/20 focus:outline-none 
+                           focus:ring-2 focus:ring-white/10 focus:bg-white/10 transition-all shadow-inner resize-y whitespace-pre-wrap"
+              />
             </div>
           </div>
 

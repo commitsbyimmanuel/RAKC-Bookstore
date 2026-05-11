@@ -56,6 +56,10 @@ const saleSchema = new mongoose.Schema({
   amountPaid: {
     type: Number,
     default: 0
+  },
+  notes: {
+    type: String,
+    default: ''
   }
 }, {
   timestamps: true,

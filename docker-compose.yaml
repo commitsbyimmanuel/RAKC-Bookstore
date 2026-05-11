@@ -19,7 +19,7 @@ services:
 
   # Backend API Service
   backend:
-    image: ghcr.io/commitsbyimmanuel/rakc-bookstore-backend:v1.0.1
+    image: ghcr.io/commitsbyimmanuel/rakc-bookstore-backend:v1.2
     container_name: rakc-backend
     restart: unless-stopped
     ports:
@@ -35,7 +35,7 @@ services:
 
   # Frontend Web Application
   frontend:
-    image: ghcr.io/commitsbyimmanuel/rakc-bookstore-frontend:v1.1
+    image: ghcr.io/commitsbyimmanuel/rakc-bookstore-frontend:v1.2
     container_name: rakc-frontend
     restart: unless-stopped
     environment:

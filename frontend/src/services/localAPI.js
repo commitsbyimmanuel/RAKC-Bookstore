@@ -73,6 +73,32 @@ export function useBooks() {
 }
 
 /**
+ * Search local books by query (title, author, isbn)
+ */
+export async function searchLocalBooks(query) {
+  if (!query || query.trim().length === 0) {
+    return [];
+  }
+  const response = await fetch(`${LOCAL_API_URL}/books?search=${encodeURIComponent(query)}`);
+  if (!response.ok) {
+    throw new Error("Failed to search books");
+  }
+  return response.json();
+}
+
+/**
+ * Hook to search local books
+ */
+export function useSearchLocalBooks(query) {
+  return useQuery({
+    queryKey: ["booksSearch", query],
+    queryFn: () => searchLocalBooks(query),
+    enabled: !!query && query.trim().length > 0,
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+  });
+}
+
+/**
  * Hook to fetch payments with optional status filter
  */
 export function usePayments(paymentStatus) {

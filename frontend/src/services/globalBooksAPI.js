@@ -15,7 +15,7 @@ function normalizeBookData(data, source) {
   }
 
   if (source === "google_books") {
-    const volumeInfo = data.items?.[0]?.volumeInfo;
+    const volumeInfo = data.items ? data.items[0]?.volumeInfo : data.volumeInfo;
     if (!volumeInfo) return null;
 
     const imageLinks = volumeInfo.imageLinks || {};
@@ -58,6 +58,30 @@ function normalizeBookData(data, source) {
       pageCount: bookData.number_of_pages || 0,
       categories: bookData.subjects?.map(s => s.name) || [],
       coverUrl: `${OPEN_LIBRARY_COVERS_URL}/${isbn}-M.jpg`,
+      stock: null,
+      location: null,
+      source: "open_library",
+    };
+  }
+
+  if (source === "open_library_search") {
+    if (!data.isbn || data.isbn.length === 0) return null;
+    
+    // Prioritize ISBN 13 if available, otherwise take the first one
+    let isbn = data.isbn.find(i => i.length === 13) || data.isbn[0];
+    isbn = isbn.replace(/[-\s]/g, "");
+
+    return {
+      isbn,
+      title: data.title || "",
+      subtitle: data.subtitle || "",
+      authors: data.author_name || [],
+      description: "", 
+      publisher: data.publisher?.[0] || "",
+      publishedDate: data.first_publish_year?.toString() || "",
+      pageCount: data.number_of_pages_median || 0,
+      categories: data.subject?.slice(0, 3) || [],
+      coverUrl: data.cover_i ? `https://covers.openlibrary.org/b/id/${data.cover_i}-M.jpg` : `${OPEN_LIBRARY_COVERS_URL}/${isbn}-M.jpg`,
       stock: null,
       location: null,
       source: "open_library",
@@ -161,8 +185,58 @@ export async function lookupBookByISBN(isbn) {
     return openLibraryResult;
   }
 
-  // Not found anywhere
+// Not found anywhere
   return null;
+}
+
+/**
+ * Search Google Books API by generic query with cancellation support
+ * @param {string} query - The search query (title, author, etc.)
+ * @param {AbortSignal} signal - AbortSignal to cancel fetch
+ * @returns {Promise<Array>} - List of normalized book data
+ */
+export async function searchGlobalBooksByQuery(query, signal) {
+  if (!query || query.length < 3) return [];
+
+  const fetchGoogle = async () => {
+    try {
+      const response = await fetch(`${GOOGLE_BOOKS_API_URL}?q=${encodeURIComponent(query)}&maxResults=4`, { signal });
+      if (response.ok) {
+        const data = await response.json();
+        return (data.items || []).map(item => normalizeBookData(item, "google_books")).filter(Boolean);
+      }
+    } catch (error) {
+      if (error.name !== "AbortError") console.warn("Google Books search failed:", error.message);
+    }
+    return [];
+  };
+
+  const fetchOpenLib = async () => {
+    try {
+      const response = await fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=4`, { signal });
+      if (response.ok) {
+        const data = await response.json();
+        return (data.docs || []).map(item => normalizeBookData(item, "open_library_search")).filter(Boolean);
+      }
+    } catch (error) {
+      if (error.name !== "AbortError") console.warn("Open Library search failed:", error.message);
+    }
+    return [];
+  };
+
+  const [googleData, openLibData] = await Promise.all([fetchGoogle(), fetchOpenLib()]);
+
+  const results = [];
+  const seenIsbns = new Set();
+  
+  for (const book of [...googleData, ...openLibData]) {
+    if (book.isbn && !seenIsbns.has(book.isbn)) {
+      seenIsbns.add(book.isbn);
+      results.push(book);
+    }
+  }
+
+  return results;
 }
 
 export default lookupBookByISBN;

@@ -1,14 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { useBookLookup } from "../hooks/useBookLookup";
-import { useCreateBookRequest } from "../services/localAPI";
+import { useBookLookup, useGlobalBookSearch } from "../hooks/useBookLookup";
+import { useCreateBookRequest, useSearchLocalBooks } from "../services/localAPI";
 
 function SourceBadge({ source }) {
   const colors = {
     local: "bg-green-600",
     google_books: "bg-blue-600",
     open_library: "bg-purple-600",
-  };
+  };``
 
   const labels = {
     local: "In Stock",
@@ -188,23 +188,77 @@ export default function CheckAvailability() {
   const [isbn, setIsbn] = useState("");
   const [searchISBN, setSearchISBN] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [showBookDropdown, setShowBookDropdown] = useState(false);
+  const [bookSearchQuery, setBookSearchQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+
+  const bookSearchRef = useRef(null);
+  const [dropdownRect, setDropdownRect] = useState(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(bookSearchQuery);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [bookSearchQuery]);
 
   const { data: book, isLoading, isError, error } = useBookLookup(searchISBN);
   const createRequestMutation = useCreateBookRequest();
+  const { data: bookSearchResults = [] } = useSearchLocalBooks(debouncedQuery);
+  const { data: globalSearchResults = [], isFetching: isFetchingGlobal } = useGlobalBookSearch(debouncedQuery);
+
+  // Close dropdown when clicking outside, and manage dropdown placement
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // If clicking inside the portal, ignore
+      const portalEl = document.getElementById("dropdown-portal-root");
+      if (portalEl && portalEl.contains(event.target)) return;
+      
+      if (bookSearchRef.current && !bookSearchRef.current.contains(event.target)) {
+        setShowBookDropdown(false);
+      }
+    };
+    
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    if (showBookDropdown && bookSearchRef.current) {
+      const updateRect = () => {
+        const rect = bookSearchRef.current.getBoundingClientRect();
+        setDropdownRect({
+          top: rect.bottom + 4,
+          left: rect.left,
+          width: rect.width,
+        });
+      };
+      
+      updateRect();
+      window.addEventListener("scroll", updateRect, true);
+      window.addEventListener("resize", updateRect);
+      return () => {
+        window.removeEventListener("scroll", updateRect, true);
+        window.removeEventListener("resize", updateRect);
+      };
+    }
+  }, [showBookDropdown, bookSearchResults, globalSearchResults]);
 
   // Auto-search when ISBN reaches 13 digits
   useEffect(() => {
     const cleanISBN = isbn.replace(/[-\s]/g, "");
-    if (cleanISBN.length === 13) {
+    if (cleanISBN.length === 13 && /^\d+$/.test(cleanISBN)) {
       setSearchISBN(cleanISBN);
+      setShowBookDropdown(false);
     }
   }, [isbn]);
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
       const cleanISBN = isbn.replace(/[-\s]/g, "");
-      if (cleanISBN.length >= 10) {
+      if (cleanISBN.length >= 10 && /^\d+$/.test(cleanISBN)) {
         setSearchISBN(cleanISBN);
+        setShowBookDropdown(false);
       }
     }
   };
@@ -212,6 +266,8 @@ export default function CheckAvailability() {
   const handleClear = () => {
     setIsbn("");
     setSearchISBN("");
+    setBookSearchQuery("");
+    setShowBookDropdown(false);
   };
 
   const handleAddRequest = () => {
@@ -236,18 +292,123 @@ export default function CheckAvailability() {
     <div className="rounded-2xl border border-white/20 bg-white/5 p-4 backdrop-blur">
       <h3 className="text-sm text-white/80 mb-3">Check Availability</h3>
       
-      <div className="flex gap-2">
-        <input
-          type="text"
-          value={isbn}
-          onChange={(e) => setIsbn(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Enter or scan ISBN..."
-          className="flex-1 bg-white/10 border border-white/20 rounded-xl px-4 py-3 
-                     placeholder:text-white/40 focus:outline-none focus:ring-2 
-                     focus:ring-white/30 transition-all"
-          autoFocus
-        />
+      <div className="flex gap-2" ref={bookSearchRef}>
+        <div className="relative flex-1">
+          <input
+            type="text"
+            value={isbn}
+            onChange={(e) => {
+              const val = e.target.value;
+              setIsbn(val);
+              const cleanVal = val.replace(/[-\s]/g, "");
+              if (cleanVal.length !== 13 || !/^\d+$/.test(cleanVal)) {
+                setBookSearchQuery(val);
+                setShowBookDropdown(val.length > 0);
+              } else {
+                setShowBookDropdown(false);
+              }
+            }}
+            onKeyDown={handleKeyDown}
+            placeholder="Scan ISBN or search title/author..."
+            className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 
+                       placeholder:text-white/40 focus:outline-none focus:ring-2 
+                       focus:ring-white/30 transition-all"
+            autoFocus
+          />
+
+          {/* Book Search Results Dropdown - Portaled */}
+          {showBookDropdown && dropdownRect && (bookSearchResults.length > 0 || globalSearchResults.length > 0 || isFetchingGlobal) && createPortal(
+            <div 
+              id="dropdown-portal-root"
+              className="fixed z-[9999] bg-black/95 backdrop-blur-xl border border-white/20 rounded-xl shadow-2xl overflow-hidden"
+              style={{
+                top: dropdownRect.top,
+                left: dropdownRect.left,
+                width: dropdownRect.width,
+              }}
+            >
+              <div className="max-h-64 overflow-y-auto">
+                {/* Local Results */}
+                {bookSearchResults.length > 0 && (
+                  <div className="px-4 py-2 text-[10px] font-bold text-white/40 uppercase tracking-widest bg-white/5">Local Inventory</div>
+                )}
+                {bookSearchResults.map((b) => (
+                  <button
+                    key={b.isbn}
+                    onClick={() => {
+                      setIsbn(b.isbn);
+                      setSearchISBN(b.isbn);
+                      setShowBookDropdown(false);
+                      setBookSearchQuery("");
+                    }}
+                    className="w-full px-4 py-3 text-left hover:bg-white/10 transition-colors border-b border-white/5 last:border-b-0 flex items-center gap-3"
+                  >
+                    {b.coverUrl ? (
+                      <img src={b.coverUrl} alt={b.title} className="w-8 h-12 object-cover rounded shadow" />
+                    ) : (
+                      <div className="w-8 h-12 bg-white/10 rounded flex items-center justify-center">
+                        <span className="text-[8px] text-white/30">No Img</span>
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-white font-medium truncate">{b.title}</p>
+                      <p className="text-xs text-white/60 mt-1 truncate">{b.authors?.join(", ")}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className={`text-xs ${b.stock > 0 ? "text-green-400" : "text-red-400"}`}>
+                        {b.stock > 0 ? `${b.stock} in stock` : "Out of stock"}
+                      </p>
+                    </div>
+                  </button>
+                ))}
+
+                {/* Global Results */}
+                {globalSearchResults.filter(b => b.isbn).length > 0 && (
+                  <div className="px-4 py-2 text-[10px] font-bold text-blue-400/60 uppercase tracking-widest bg-blue-500/5 mt-1 border-y border-white/5">Internet Search</div>
+                )}
+                {globalSearchResults.filter(b => b.isbn).map((b) => (
+                  <button
+                    key={b.isbn}
+                    onClick={() => {
+                      setIsbn(b.isbn);
+                      setSearchISBN(b.isbn);
+                      setShowBookDropdown(false);
+                      setBookSearchQuery("");
+                    }}
+                    className="w-full px-4 py-3 text-left hover:bg-blue-500/10 transition-colors border-b border-white/5 last:border-b-0 flex items-center gap-3"
+                  >
+                    {b.coverUrl ? (
+                      <img src={b.coverUrl} alt={b.title} className="w-8 h-12 object-cover rounded shadow" />
+                    ) : (
+                      <div className="w-8 h-12 bg-white/10 rounded flex items-center justify-center">
+                        <span className="text-[8px] text-white/30">No Img</span>
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-blue-100 font-medium truncate">{b.title}</p>
+                      <p className="text-xs text-blue-100/60 mt-1 truncate">{b.authors?.join(", ")}</p>
+                    </div>
+                    <div className="text-right flex flex-col items-end gap-1">
+                       <span className={`text-[10px] uppercase font-bold tracking-tighter px-2 py-1 rounded-md ${
+                          b.source === "google_books" ? "bg-blue-500/20 text-blue-400" : "bg-purple-500/20 text-purple-400"
+                       }`}>
+                         {b.source === "google_books" ? "Google Books" : "Open Library"}
+                       </span>
+                    </div>
+                  </button>
+                ))}
+
+                {isFetchingGlobal && (
+                  <div className="p-4 flex items-center justify-center gap-2 text-white/40">
+                    <div className="w-3 h-3 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                    <span className="text-xs">Searching internet...</span>
+                  </div>
+                )}
+              </div>
+            </div>,
+            document.body
+          )}
+        </div>
         {(isbn || searchISBN) && (
           <button
             onClick={handleClear}

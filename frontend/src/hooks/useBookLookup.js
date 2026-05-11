@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { lookupBookByISBN } from "../services/globalBooksAPI";
+import { lookupBookByISBN, searchGlobalBooksByQuery } from "../services/globalBooksAPI";
 
 /**
  * Custom hook for looking up a book by ISBN using TanStack Query
@@ -20,3 +20,18 @@ export function useBookLookup(isbn, options = {}) {
 }
 
 export default useBookLookup;
+
+/**
+ * Custom hook for searching books globally by query
+ * 
+ * @param {string} query - The search query
+ * @returns {Object} - Query result with data, isLoading, isError, error
+ */
+export function useGlobalBookSearch(query) {
+  return useQuery({
+    queryKey: ["globalBookSearch", query],
+    queryFn: ({ signal }) => searchGlobalBooksByQuery(query, signal),
+    enabled: !!query && query.trim().length >= 3,
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+  });
+}

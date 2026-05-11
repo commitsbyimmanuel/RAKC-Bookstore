@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useBookLookup } from "../hooks/useBookLookup";
-import { useCreateSale, useSearchDirectory, useUpdateBookStock } from "../services/localAPI";
+import { useCreateSale, useSearchDirectory, useSearchLocalBooks, useUpdateBookStock } from "../services/localAPI";
 import Button from "../ui/Button";
 import CheckoutModal from "../ui/CheckoutModal";
 
@@ -15,12 +15,15 @@ export default function NewSale() {
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [customerEmail, setCustomerEmail] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showBookDropdown, setShowBookDropdown] = useState(false);
+  const [bookSearchQuery, setBookSearchQuery] = useState("");
   const [notes, setNotes] = useState("");
   const [purchaseDate, setPurchaseDate] = useState(new Date());
   const [cart, setCart] = useState([]);
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
+  const bookSearchRef = useRef(null);
 
   // Update time every minute
   useEffect(() => {
@@ -40,6 +43,7 @@ export default function NewSale() {
 
   const { data: book, isLoading, isError, error } = useBookLookup(searchISBN);
   const { data: searchResults = [] } = useSearchDirectory(customerSearchQuery);
+  const { data: bookSearchResults = [] } = useSearchLocalBooks(bookSearchQuery);
   const updateStockMutation = useUpdateBookStock();
   const createSaleMutation = useCreateSale();
 
@@ -47,8 +51,9 @@ export default function NewSale() {
   // Auto-search when ISBN reaches 13 digits
   useEffect(() => {
     const cleanISBN = isbn.replace(/[-\s]/g, "");
-    if (cleanISBN.length === 13) {
+    if (cleanISBN.length === 13 && /^\d+$/.test(cleanISBN)) {
       setSearchISBN(cleanISBN);
+      setShowBookDropdown(false);
     }
   }, [isbn]);
 
@@ -76,6 +81,9 @@ export default function NewSale() {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setShowDropdown(false);
+      }
+      if (bookSearchRef.current && !bookSearchRef.current.contains(event.target)) {
+        setShowBookDropdown(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -107,8 +115,9 @@ export default function NewSale() {
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
       const cleanISBN = isbn.replace(/[-\s]/g, "");
-      if (cleanISBN.length >= 10) {
+      if (cleanISBN.length >= 10 && /^\d+$/.test(cleanISBN)) {
         setSearchISBN(cleanISBN);
+        setShowBookDropdown(false);
       }
     }
   };
@@ -203,18 +212,66 @@ export default function NewSale() {
       <section className="md:col-span-2 flex flex-col min-h-[500px] rounded-2xl border border-white/20 bg-white/5 backdrop-blur overflow-hidden">
         
         {/* Top: ISBN Scanner (Full Width) */}
-        <div className="p-4 border-b border-white/10">
+        <div className="p-4 border-b border-white/10 relative" ref={bookSearchRef}>
           <input
             type="text"
             value={isbn}
-            onChange={(e) => setIsbn(e.target.value)}
+            onChange={(e) => {
+              const val = e.target.value;
+              setIsbn(val);
+              const cleanVal = val.replace(/[-\s]/g, "");
+              if (cleanVal.length !== 13 || !/^\d+$/.test(cleanVal)) {
+                setBookSearchQuery(val);
+                setShowBookDropdown(val.length > 0);
+              } else {
+                setShowBookDropdown(false);
+              }
+            }}
             onKeyDown={handleKeyDown}
-            placeholder="Scan or type ISBN..."
+            placeholder="Scan ISBN or search title/author..."
             className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-2
                        text-white placeholder:text-white/30 focus:outline-none 
                        focus:ring-2 focus:ring-white/20 focus:bg-white/10 transition-all font-mono text-sm shadow-inner"
             autoFocus
           />
+
+          {/* Book Search Results Dropdown */}
+          {showBookDropdown && bookSearchResults.length > 0 && (
+            <div className="absolute z-50 w-[calc(100%-2rem)] mt-2 bg-black/95 backdrop-blur-xl border border-white/20 rounded-xl shadow-2xl overflow-hidden left-4">
+              <div className="max-h-64 overflow-y-auto">
+                {bookSearchResults.map((b) => (
+                  <button
+                    key={b.isbn}
+                    onClick={() => {
+                      setIsbn(b.isbn);
+                      setSearchISBN(b.isbn);
+                      setShowBookDropdown(false);
+                      setBookSearchQuery("");
+                    }}
+                    className="w-full px-5 py-3 text-left hover:bg-white/10 transition-colors border-b border-white/5 last:border-b-0 flex items-center gap-4"
+                  >
+                    {b.coverUrl ? (
+                      <img src={b.coverUrl} alt={b.title} className="w-10 h-14 object-cover rounded shadow" />
+                    ) : (
+                      <div className="w-10 h-14 bg-white/10 rounded flex items-center justify-center">
+                        <span className="text-[10px] text-white/30">No Img</span>
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-white font-medium truncate">{b.title}</p>
+                      <p className="text-xs text-white/60 mt-1 truncate">{b.authors?.join(", ")}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-bold text-white">{b.price || 0} AED</p>
+                      <p className={`text-xs mt-1 ${b.stock > 0 ? "text-green-400" : "text-red-400"}`}>
+                        {b.stock} in stock
+                      </p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Middle: Cart + Book Preview */}

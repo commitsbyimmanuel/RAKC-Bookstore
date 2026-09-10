@@ -26,7 +26,7 @@ services:
     environment:
       - BOOKSTORE_DB_URI=${DB_URI}
       - PORT=3001
-      - RABBITMQ_URL=
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
     networks:
       - rakc-network
 

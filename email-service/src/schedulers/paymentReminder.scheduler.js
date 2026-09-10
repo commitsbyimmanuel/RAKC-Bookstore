@@ -12,7 +12,7 @@ const saleSchema = new mongoose.Schema({
   paymentMethod: String,
   paymentStatus: String,
   amountPaid: Number,
-  purchaseDate: String,
+  purchaseDate: Date,
 }, { collection: 'sales' });
 
 // Only define model if not already defined

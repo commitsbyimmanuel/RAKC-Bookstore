@@ -73,10 +73,10 @@ export default function Reports() {
   // Fetch all sales data
   const { data: allSales = [], isLoading } = usePayments();
 
-  // Helper to parse date from purchaseDate string (e.g., "Feb 04, 2026 17:39")
-  const parseDate = (dateStr) => {
-    if (!dateStr) return null;
-    const date = new Date(dateStr);
+  // BSON dates are serialized as ISO strings by the API.
+  const parseDate = (dateValue) => {
+    if (!dateValue) return null;
+    const date = new Date(dateValue);
     return isNaN(date.getTime()) ? null : date;
   };
 

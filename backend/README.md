@@ -28,18 +28,18 @@ Copy the example environment file and configure your MongoDB connection:
 Edit `.env.local`:
 
 ```env
-MONGODB_URI=mongodb://localhost:27017/Bookstore
+BOOKSTORE_DB_URI=mongodb://localhost:27017/rakc-platform
 PORT=3001
 ```
 
 **For local MongoDB:**
 ```
-MONGODB_URI=mongodb://localhost:27017/Bookstore
+BOOKSTORE_DB_URI=mongodb://localhost:27017/rakc-platform
 ```
 
 **For MongoDB Atlas:**
 ```
-MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/Bookstore
+BOOKSTORE_DB_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/rakc-platform
 ```
 
 ### 3. Seed the Database

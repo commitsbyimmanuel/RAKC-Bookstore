@@ -23,16 +23,16 @@ export default function Payments() {
     return matchesStatus && matchesMethod;
   });
 
-  // Helper to parse date from purchaseDate string (e.g., "Feb 04, 2026 17:39")
-  const parseDate = (dateStr) => {
-    if (!dateStr) return new Date(0);
-    return new Date(dateStr);
+  // BSON dates are serialized as ISO strings by the API.
+  const parseDate = (dateValue) => {
+    if (!dateValue) return new Date(0);
+    return new Date(dateValue);
   };
 
   // Helper to format date for grouping (e.g., "Feb 04, 2026")
-  const formatDateForGroup = (dateStr) => {
-    if (!dateStr) return "Unknown Date";
-    const date = parseDate(dateStr);
+  const formatDateForGroup = (dateValue) => {
+    if (!dateValue) return "Unknown Date";
+    const date = parseDate(dateValue);
     if (isNaN(date.getTime())) return "Unknown Date";
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     return `${months[date.getMonth()]} ${String(date.getDate()).padStart(2, '0')}, ${date.getFullYear()}`;

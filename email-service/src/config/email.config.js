@@ -19,7 +19,7 @@ module.exports = {
     address: process.env.EMAIL_FROM_ADDRESS || 'noreply@rakcbookstore.com',
   },
   mongodb: {
-    uri: process.env.MONGODB_URI || 'mongodb://localhost:27017/Bookstore',
+    uri: process.env.MONGODB_URI || 'mongodb://localhost:27017/rakc-platform',
   },
   scheduler: {
     paymentReminderCron: process.env.PAYMENT_REMINDER_CRON || '0 9 * * MON',

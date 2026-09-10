@@ -1,35 +1,32 @@
 services:
   # MongoDB Database
-  mongodb:
-    image: mongo:7.0
-    container_name: rakc-mongodb
-    restart: unless-stopped
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongodb_data:/data/db
-      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
-    environment:
-      - MONGO_INITDB_DATABASE=Bookstore
-      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
-      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
-      - APPUSER_PASSWORD=${APPUSER_PASSWORD}
-    networks:
-      - rakc-network
+  # mongodb:
+  #   image: mongo:7.0
+  #   container_name: rakc-mongodb
+  #   restart: unless-stopped
+  #   ports:
+  #     - "27017:27017"
+  #   volumes:
+  #     - mongodb_data:/data/db
+  #   environment:
+  #     - MONGO_INITDB_DATABASE=rakc-platform
+  #     - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
+  #     - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+  #     - APPUSER_PASSWORD=${APPUSER_PASSWORD}
+  #   networks:
+  #     - rakc-network
 
   # Backend API Service
   backend:
-    image: ghcr.io/commitsbyimmanuel/rakc-bookstore-backend:v1.2
+    image: ghcr.io/commitsbyimmanuel/rakc-bookstore-backend:v1.9
     container_name: rakc-backend
     restart: unless-stopped
     ports:
       - "3001:3001"
     environment:
-      - MONGODB_URI=mongodb://appuser:${APPUSER_PASSWORD}@mongodb:27017/Bookstore
+      - BOOKSTORE_DB_URI=${DB_URI}
       - PORT=3001
-      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
-    depends_on:
-      - mongodb
+      - RABBITMQ_URL=
     networks:
       - rakc-network
 
@@ -66,12 +63,11 @@ services:
     env_file:
       - .env
     environment:
-      - MONGODB_URI=mongodb://mongodb:27017/Bookstore
+      - MONGODB_URI=${DB_URI}
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
     ports:
       - "3002:3002"
     depends_on:
-      - mongodb
       - rabbitmq
     networks:
       - rakc-network

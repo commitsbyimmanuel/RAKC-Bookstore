@@ -13,13 +13,13 @@ const __dirname = dirname(__filename);
 // Load environment variables
 dotenv.config({ path: '.env.local' });
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/Bookstore';
+const BOOKSTORE_DB_URI = process.env.BOOKSTORE_DB_URI || process.env.MONGODB_URI || 'mongodb://localhost:27017/rakc-platform';
 
 async function seedDatabase() {
   try {
     // Connect to MongoDB
     console.log('Connecting to MongoDB...');
-    await mongoose.connect(MONGODB_URI);
+    await mongoose.connect(BOOKSTORE_DB_URI);
     console.log('✓ Connected to MongoDB');
     console.log(`✓ Database: ${mongoose.connection.name}`);
 

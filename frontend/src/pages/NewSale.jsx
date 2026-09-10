@@ -176,7 +176,7 @@ export default function NewSale() {
         totalAmount: totalAmount,
         amountPaid: amountPaid,
         paymentStatus: paymentStatus,
-        purchaseDate: formatDate(purchaseDate),
+        purchaseDate: purchaseDate.toISOString(),
         soldAt: new Date().toISOString(),
         notes: notes,
       });

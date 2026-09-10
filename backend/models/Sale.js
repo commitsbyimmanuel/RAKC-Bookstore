@@ -41,11 +41,11 @@ const saleSchema = new mongoose.Schema({
     required: true
   },
   purchaseDate: {
-    type: String,
+    type: Date,
     required: true
   },
   soldAt: {
-    type: String,
+    type: Date,
     required: true
   },
   paymentStatus: {

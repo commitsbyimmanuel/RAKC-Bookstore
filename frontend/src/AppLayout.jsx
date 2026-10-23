@@ -1,5 +1,5 @@
 // AppLayout.jsx
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import { useEffect, useRef } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import NavBar from "./navbar/NavBar";

@@ -1,12 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { API_URL, apiFetch } from "./apiClient";
 
-const LOCAL_API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
+const LOCAL_API_URL = API_URL;
 
 /**
  * Fetch all books from local json-server
  */
 export async function fetchAllBooks() {
-  const response = await fetch(`${LOCAL_API_URL}/books`);
+  const response = await apiFetch(`${LOCAL_API_URL}/books`);
   if (!response.ok) {
     throw new Error("Failed to fetch books");
   }
@@ -22,7 +23,7 @@ export async function fetchPayments(paymentStatus) {
     ? `${LOCAL_API_URL}/sales?paymentStatus=${paymentStatus}`
     : `${LOCAL_API_URL}/sales`;
   
-  const response = await fetch(url);
+  const response = await apiFetch(url);
   if (!response.ok) {
     throw new Error("Failed to fetch sales");
   }
@@ -33,7 +34,7 @@ export async function fetchPayments(paymentStatus) {
  * Fetch pending book requests from local json-server
  */
 export async function fetchBookRequests() {
-  const response = await fetch(`${LOCAL_API_URL}/bookRequests?fulfilled=false`);
+  const response = await apiFetch(`${LOCAL_API_URL}/bookRequests?fulfilled=false`);
   if (!response.ok) {
     throw new Error("Failed to fetch book requests");
   }
@@ -45,7 +46,7 @@ export async function fetchBookRequests() {
  * @param {number} id - The request ID
  */
 export async function fulfillBookRequest(id) {
-  const response = await fetch(`${LOCAL_API_URL}/bookRequests/${id}`, {
+  const response = await apiFetch(`${LOCAL_API_URL}/bookRequests/${id}`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
@@ -79,7 +80,7 @@ export async function searchLocalBooks(query) {
   if (!query || query.trim().length === 0) {
     return [];
   }
-  const response = await fetch(`${LOCAL_API_URL}/books?search=${encodeURIComponent(query)}`);
+  const response = await apiFetch(`${LOCAL_API_URL}/books?search=${encodeURIComponent(query)}`);
   if (!response.ok) {
     throw new Error("Failed to search books");
   }
@@ -140,7 +141,7 @@ export function useFulfillBookRequest() {
  * @param {Object} requestData - The book request data
  */
 export async function createBookRequest(requestData) {
-  const response = await fetch(`${LOCAL_API_URL}/bookRequests`, {
+  const response = await apiFetch(`${LOCAL_API_URL}/bookRequests`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -164,7 +165,7 @@ export async function createBookRequest(requestData) {
  * @param {number} newStock - The new stock count
  */
 export async function updateBookStock(id, newStock) {
-  const response = await fetch(`${LOCAL_API_URL}/books/${id}`, {
+  const response = await apiFetch(`${LOCAL_API_URL}/books/${id}`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
@@ -201,7 +202,7 @@ export function useUpdateBookStock() {
  * @param {Object} updateData - Data to update (stock, location, etc.)
  */
 export async function updateBook(id, updateData) {
-  const response = await fetch(`${LOCAL_API_URL}/books/${id}`, {
+  const response = await apiFetch(`${LOCAL_API_URL}/books/${id}`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
@@ -232,7 +233,7 @@ export function useUpdateBook() {
 
 /** Set an exact stock count and save its adjustment reason. */
 export async function adjustBookStock(id, stock, comment) {
-  const response = await fetch(`${LOCAL_API_URL}/books/${id}/adjust-stock`, {
+  const response = await apiFetch(`${LOCAL_API_URL}/books/${id}/adjust-stock`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ stock, comment }),
@@ -262,7 +263,7 @@ export function useAdjustBookStock() {
  * @param {Object} updateData - Data to update (amountPaid, paymentStatus, etc.)
  */
 export async function updatePayment(id, updateData) {
-  const response = await fetch(`${LOCAL_API_URL}/sales/${id}`, {
+  const response = await apiFetch(`${LOCAL_API_URL}/sales/${id}`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
@@ -297,7 +298,7 @@ export function useUpdatePayment() {
  * @param {Object} bookData - The book data (isbn, title, authors, stock, location, etc.)
  */
 export async function addBook(bookData) {
-  const response = await fetch(`${LOCAL_API_URL}/books`, {
+  const response = await apiFetch(`${LOCAL_API_URL}/books`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -332,7 +333,7 @@ export function useAddBook() {
  * @param {Object} saleData - The sale data (isbn, quantity, customerName, etc.)
  */
 export async function createSale(saleData) {
-  const response = await fetch(`${LOCAL_API_URL}/sales`, {
+  const response = await apiFetch(`${LOCAL_API_URL}/sales`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -367,7 +368,7 @@ export function useCreateSale() {
  * @param {number} limit - Number of top sellers to return (default 14)
  */
 export async function fetchTopSellers(limit = 14) {
-  const response = await fetch(`${LOCAL_API_URL}/sales/top-sellers?limit=${limit}`);
+  const response = await apiFetch(`${LOCAL_API_URL}/sales/top-sellers?limit=${limit}`);
   if (!response.ok) {
     throw new Error("Failed to fetch top sellers");
   }
@@ -412,7 +413,7 @@ export async function searchDirectory(query) {
     return [];
   }
   
-  const response = await fetch(`${LOCAL_API_URL}/directory/search?query=${encodeURIComponent(query)}`);
+  const response = await apiFetch(`${LOCAL_API_URL}/directory/search?query=${encodeURIComponent(query)}`);
   if (!response.ok) {
     throw new Error("Failed to search directory");
   }

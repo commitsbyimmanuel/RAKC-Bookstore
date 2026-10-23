@@ -1,4 +1,6 @@
-const LOCAL_API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
+import { API_URL, apiFetch } from "./apiClient";
+
+const LOCAL_API_URL = API_URL;
 const GOOGLE_BOOKS_API_URL = "https://www.googleapis.com/books/v1/volumes";
 const OPEN_LIBRARY_API_URL = "https://openlibrary.org/api/books";
 const OPEN_LIBRARY_COVERS_URL = "https://covers.openlibrary.org/b/isbn";
@@ -96,7 +98,7 @@ function normalizeBookData(data, source) {
  */
 async function searchLocalDB(isbn) {
   try {
-    const response = await fetch(`${LOCAL_API_URL}/books?isbn=${isbn}`);
+    const response = await apiFetch(`${LOCAL_API_URL}/books?isbn=${isbn}`);
     if (!response.ok) return null;
     
     const books = await response.json();

@@ -6,6 +6,8 @@ import Orders from "./pages/Orders";
 import Payments from "./pages/Payments";
 import Reports from "./pages/Reports";
 import Stock from "./pages/Stock";
+import AuthProvider from "./auth/AuthProvider";
+import AuthGate from "./auth/AuthGate";
 
 const router = createBrowserRouter([
   {
@@ -40,7 +42,7 @@ const router = createBrowserRouter([
 ]);
 
 function App() {
-  return <RouterProvider router={router} />;
+  return <AuthProvider><AuthGate><RouterProvider router={router} /></AuthGate></AuthProvider>;
 }
 
 export default App;

@@ -1,4 +1,5 @@
 import express from 'express';
+import { saleFields } from '../utils/actor.js';
 import Book from '../models/Book.js';
 import Sale from '../models/Sale.js';
 import { publishToQueue } from '../utils/rabbitmq.js';
@@ -99,7 +100,7 @@ router.get('/:id', async (req, res) => {
 // POST create new sale
 router.post('/', async (req, res) => {
   try {
-    const sale = new Sale(req.body);
+    const sale = new Sale(saleFields(req, true));
     await sale.save();
     const savedSale = await Sale.findOne({ id: sale.id }).select('-_id -__v');
     
@@ -138,7 +139,7 @@ router.put('/:id', async (req, res) => {
   try {
     const sale = await Sale.findOneAndUpdate(
       { id: req.params.id },
-      req.body,
+      saleFields(req),
       { new: true, runValidators: true, overwrite: true }
     ).select('-_id -__v');
     
@@ -156,7 +157,7 @@ router.patch('/:id', async (req, res) => {
   try {
     const sale = await Sale.findOneAndUpdate(
       { id: req.params.id },
-      { $set: req.body },
+      { $set: saleFields(req) },
       { new: true, runValidators: true }
     ).select('-_id -__v');
     

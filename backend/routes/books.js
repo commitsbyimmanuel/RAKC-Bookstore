@@ -1,4 +1,5 @@
 import express from 'express';
+import { actorFor } from '../utils/actor.js';
 import Book from '../models/Book.js';
 
 const router = express.Router();
@@ -105,7 +106,8 @@ router.post('/:id/adjust-stock', async (req, res) => {
             previousStock: currentBook.stock,
             newStock: stock,
             comment: normalizedComment,
-            adjustedAt: new Date()
+            adjustedAt: new Date(),
+            adjustedBy: actorFor(req)
           }
         }
       },

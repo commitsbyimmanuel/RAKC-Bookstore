@@ -18,27 +18,32 @@ services:
 
   # Backend API Service
   backend:
-    image: ghcr.io/commitsbyimmanuel/rakc-bookstore-backend:v1.9
+    image: ghcr.io/commitsbyimmanuel/rakc-bookstore-backend:v1.10
+    build: ./backend
     container_name: rakc-backend
     restart: unless-stopped
-    ports:
-      - "3001:3001"
+    expose:
+      - "3001"
     environment:
       - BOOKSTORE_DB_URI=${DB_URI}
       - PORT=3001
+      - NODE_ENV=production
+      - BOOKSTORE_AUTH_URL=${BOOKSTORE_AUTH_URL:-https://admin.rakchurch.com}
+      - BOOKSTORE_PUBLIC_URL=${BOOKSTORE_PUBLIC_URL:-http://bookstore.local}
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
     networks:
       - rakc-network
 
   # Frontend Web Application
   frontend:
-    image: ghcr.io/commitsbyimmanuel/rakc-bookstore-frontend:v1.2
+    image: ghcr.io/commitsbyimmanuel/rakc-bookstore-frontend:v1.3
+    build: ./frontend
     container_name: rakc-frontend
     restart: unless-stopped
     environment:
-      - VITE_API_URL=http://localhost:3001
+      - BOOKSTORE_API_UPSTREAM=http://backend:3001
     ports:
-      - "80:80"
+      - "${BOOKSTORE_BIND_ADDRESS:-127.0.0.1}:${BOOKSTORE_PORT:-80}:80"
     depends_on:
       - backend
     networks:

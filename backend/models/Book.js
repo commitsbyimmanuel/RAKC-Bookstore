@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import { nanoid } from 'nanoid';
+import { actorSchema } from '../utils/actor.js';
 
 const stockAdjustmentSchema = new mongoose.Schema({
   previousStock: { type: Number, required: true },
@@ -11,7 +12,8 @@ const stockAdjustmentSchema = new mongoose.Schema({
     minlength: 10,
     validate: value => value.split(/\s+/).filter(word => /[\p{L}\p{N}]/u.test(word)).length >= 3
   },
-  adjustedAt: { type: Date, default: Date.now }
+  adjustedAt: { type: Date, default: Date.now },
+  adjustedBy: { type: actorSchema, default: undefined }
 }, { _id: false });
 
 const bookSchema = new mongoose.Schema({

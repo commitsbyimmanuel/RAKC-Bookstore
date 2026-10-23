@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import { nanoid } from 'nanoid';
+import { actorSchema } from '../utils/actor.js';
 
 const saleItemSchema = new mongoose.Schema({
   isbn: String,
@@ -10,6 +11,8 @@ const saleItemSchema = new mongoose.Schema({
 }, { _id: false });
 
 const saleSchema = new mongoose.Schema({
+  createdBy: { type: actorSchema, immutable: true, default: undefined },
+  updatedBy: { type: actorSchema, default: undefined },
   id: {
     type: String,
     default: () => nanoid(4),

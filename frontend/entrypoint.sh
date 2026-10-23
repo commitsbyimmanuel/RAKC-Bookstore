@@ -1,7 +1,9 @@
 #!/bin/sh
 set -e
 
-echo "Building frontend with VITE_API_URL=${VITE_API_URL}"
+node /app/configure-nginx.mjs
+
+echo "Building frontend with same-origin API access"
 
 # Build the Vite app with the runtime environment variable
 npm run build

@@ -5,7 +5,7 @@ WORKDIR /app
 
 # Copy package files and install dependencies
 COPY package*.json ./
-RUN npm install
+RUN npm ci
 
 # Copy source code
 COPY . .
@@ -14,13 +14,13 @@ COPY . .
 FROM node:20-alpine
 
 # Install nginx
-RUN apk add --no-cache nginx
+RUN apk add --no-cache nginx ca-certificates
 
 # Create nginx directories
 RUN mkdir -p /usr/share/nginx/html /run/nginx
 
 # Copy nginx config
-COPY nginx.conf /etc/nginx/http.d/default.conf
+COPY nginx.conf /app/nginx.conf
 
 # Copy app source and node_modules from builder
 WORKDIR /app

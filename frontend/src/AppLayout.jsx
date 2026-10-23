@@ -1,5 +1,5 @@
 // AppLayout.jsx
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion as Motion } from "framer-motion";
 import { useEffect, useRef } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import NavBar from "./navbar/NavBar";
@@ -70,7 +70,7 @@ function AppLayout() {
         {/* Static mask preserves height & clips edges */}
         <div className="relative overflow-hidden">
           <AnimatePresence mode="wait" initial={false} custom={direction}>
-            <motion.div
+            <Motion.div
               key={location.key} // ⬅️ critical for exit to run
               custom={direction}
               variants={variants}
@@ -86,7 +86,7 @@ function AppLayout() {
               <main className="p-5 md:p-8 min-h-[450px]">
                 <Outlet context={direction} />
               </main>
-            </motion.div>
+            </Motion.div>
           </AnimatePresence>
         </div>
       </div>

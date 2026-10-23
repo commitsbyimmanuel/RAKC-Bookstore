@@ -147,5 +147,81 @@ backend/
 
 - The backend uses the same port (3001) as the previous json-server setup for seamless integration
 - All IDs are auto-generated 4-character strings using nanoid for compatibility
-- CORS is enabled for frontend communication
+- Browser API requests use the frontend's same-origin `/api` proxy.
+
+## Bookstore POS authentication
+
+The Admin Console at `https://admin.rakchurch.com` is the BetterAuth authority.
+This backend forwards sign-in and password-change requests to that authority and
+keeps the signed session credential in an HttpOnly, host-only cookie. Session
+credentials are never returned to browser JavaScript or stored in localStorage.
+Every books, sales, requests, and directory request validates the live session and
+the current explicit `bookstorePos: ["access"]` grant through
+`GET /api/bookstore/access`. An unavailable authority returns 503 and blocks data
+access. There is no offline access mode or cached authorization grant.
+
+In Admin Console > Access Management > Groups, set **Bookstore POS access** to
+**Grant** for an intended group and save. Assign the intended users to that group.
+All existing groups initially show **Deny**, including the system Admin group.
+Owners and admins must also belong to an explicitly granting group. Group grants
+combine: Deny contributes no POS permission; any assigned granting group allows
+access. Removing the last grant or the user's membership blocks their next API
+request. Admin Console Books reporting permission remains independent.
+
+The local Ubuntu workstation uses the hosts-file entry `127.0.0.1 bookstore.local`
+and opens `http://bookstore.local`. Compose binds the frontend to `127.0.0.1:80`
+and publishes no backend port. Plain HTTP is supported for this local alias and
+loopback only; other production origins must use HTTPS. HTTPS origins use a
+Secure `__Host-` cookie. POST/PUT/PATCH/DELETE requests require the configured
+Origin and the frontend's custom request header. The workstation needs outbound
+HTTPS access to the Admin Console for login and each protected request.
+
+### Ubuntu rollout
+
+The release images are backend `v1.10` and frontend `v1.3`. Use the updated
+root `docker-compose.yaml`, keeping the workstation's existing `.env` values,
+database, RabbitMQ, email service, and history. The Compose defaults are:
+
+```dotenv
+BOOKSTORE_AUTH_URL=https://admin.rakchurch.com
+BOOKSTORE_PUBLIC_URL=http://bookstore.local
+BOOKSTORE_BIND_ADDRESS=127.0.0.1
+BOOKSTORE_PORT=80
+```
+
+Deploy the Admin Console changes before updating the workstation. From the
+bookstore checkout on the Ubuntu PC, after pulling the integration commit:
+
+```sh
+docker compose config --quiet
+docker compose pull backend frontend
+docker compose up -d --no-deps backend frontend
+docker compose ps backend frontend
+curl -i http://bookstore.local/api/auth/session
+curl -i http://bookstore.local/api/books
+```
+
+Both anonymous API requests must return 401. Open `http://bookstore.local` and
+verify sign-in for an explicitly granted account, denial for an ungranted account,
+temporary-password change if applicable, sign-out, and revocation while already
+signed in. No schema migration, password reset, or data deletion is required.
+The new optional sale and stock-adjustment actor fields apply to future writes.
+
+If prebuilt image pulls are unavailable, build from the updated checkout with
+`docker compose build backend frontend` and then run the same `up` command.
+If verification fails, stop `frontend` and `backend` while correcting the rollout;
+the previous images did not enforce authentication.
+
+For development, run the backend with its `.env.local` settings from
+`.env.example`; Vite proxies `/api` to `http://localhost:3001` by default. Override
+`BOOKSTORE_API_UPSTREAM` in the frontend environment for another backend.
+
+### Verification
+
+`npm test` exercises the actual Express application without a database, including
+direct anonymous routes, explicit grant revocation, expired sessions, temporary
+passwords, cross-site requests, outages, sign-out, and login throttling. The Admin
+Console tests separately exercise the real BetterAuth signed-bearer contract and
+the explicit-grant policy. Local tests do not validate the Ubuntu workstation's
+network, database credentials, printer, or live granted-user workflow.
 - The API maintains full compatibility with json-server behavior

@@ -1,6 +1,8 @@
 import NavBarItem from "./NavBarItem";
+import { useAuth } from "../auth/auth-context";
 
 export default function NavBar() {
+  const auth = useAuth();
   const currentPath = window.location.pathname;
   const currentPathNormalized = currentPath.startsWith("/")
     ? currentPath.slice(1)
@@ -18,7 +20,7 @@ export default function NavBar() {
             RAK Church Bookstore
           </h1>
         </div>
-        <nav className="flex items-center gap-2">
+        <nav className="flex flex-wrap items-center gap-2" aria-label="Bookstore">
           {[
             { key: "home", label: "Home", link: "/" },
             { key: "orders", label: "Orders", link: "/orders" },
@@ -33,6 +35,10 @@ export default function NavBar() {
             />
           ))}
         </nav>
+      </div>
+      <div className="mt-3 flex min-w-0 items-center justify-between gap-3 border-t border-white/10 pt-3 text-sm">
+        <span className="min-w-0 truncate text-white/65">{auth.user?.name || auth.user?.email}</span>
+        <button type="button" onClick={auth.signOut} className="shrink-0 rounded-lg border border-white/15 px-3 py-1.5 hover:bg-white/10">Sign out</button>
       </div>
     </header>
   );

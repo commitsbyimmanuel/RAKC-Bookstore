@@ -75,6 +75,52 @@ router.put('/:id', async (req, res) => {
   }
 });
 
+// Set an exact stock count and retain the reason with the previous count.
+router.post('/:id/adjust-stock', async (req, res) => {
+  const { stock, comment } = req.body ?? {};
+  const normalizedComment = typeof comment === 'string'
+    ? comment.trim().replace(/\s+/g, ' ')
+    : '';
+  const wordCount = normalizedComment.split(' ').filter(word => /[\p{L}\p{N}]/u.test(word)).length;
+
+  if (!Number.isSafeInteger(stock) || stock < 0) {
+    return res.status(400).json({ error: 'New stock must be a whole number of zero or more.' });
+  }
+  if (normalizedComment.length < 10 || wordCount < 3) {
+    return res.status(400).json({ error: 'Comment must contain at least 10 characters and 3 words.' });
+  }
+
+  try {
+    const currentBook = await Book.findOne({ id: req.params.id });
+    if (!currentBook) {
+      return res.status(404).json({ error: 'Book not found' });
+    }
+
+    const book = await Book.findOneAndUpdate(
+      { id: req.params.id, stock: currentBook.stock },
+      {
+        $set: { stock },
+        $push: {
+          stockAdjustments: {
+            previousStock: currentBook.stock,
+            newStock: stock,
+            comment: normalizedComment,
+            adjustedAt: new Date()
+          }
+        }
+      },
+      { new: true, runValidators: true }
+    ).select('-_id -__v');
+
+    if (!book) {
+      return res.status(409).json({ error: 'Stock changed while saving. Please try again.' });
+    }
+    res.json(book);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
 // PATCH partial update of book
 router.patch('/:id', async (req, res) => {
   try {

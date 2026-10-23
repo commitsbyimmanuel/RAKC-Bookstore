@@ -230,6 +230,32 @@ export function useUpdateBook() {
   });
 }
 
+/** Set an exact stock count and save its adjustment reason. */
+export async function adjustBookStock(id, stock, comment) {
+  const response = await fetch(`${LOCAL_API_URL}/books/${id}/adjust-stock`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ stock, comment }),
+  });
+  const result = await response.json();
+  if (!response.ok) {
+    throw new Error(result.error || "Failed to adjust stock. Please try again.");
+  }
+  return result;
+}
+
+export function useAdjustBookStock() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, stock, comment }) => adjustBookStock(id, stock, comment),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["books"] });
+      queryClient.invalidateQueries({ queryKey: ["book"] });
+    },
+  });
+}
+
 /**
  * Update sale payment details
  * @param {string} id - The sale ID

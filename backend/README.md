@@ -80,6 +80,7 @@ All endpoints support standard RESTful operations:
 - `POST /books` - Create new book
 - `PUT /books/:id` - Full update
 - `PATCH /books/:id` - Partial update
+- `POST /books/:id/adjust-stock` - Set the exact nonnegative integer stock count. Body: `{ "stock": 3, "comment": "Corrected after physical count" }`. Comments require at least 10 characters and 3 words after normalizing whitespace. Appends the previous count, new count, comment, and timestamp to the book's `stockAdjustments` history in the same update. Returns 409 if stock changes during the update.
 - `DELETE /books/:id` - Delete book
 
 ### Payments (`/payments`)

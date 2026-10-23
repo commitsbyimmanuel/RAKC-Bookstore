@@ -1,6 +1,19 @@
 import mongoose from 'mongoose';
 import { nanoid } from 'nanoid';
 
+const stockAdjustmentSchema = new mongoose.Schema({
+  previousStock: { type: Number, required: true },
+  newStock: { type: Number, required: true, min: 0, validate: Number.isSafeInteger },
+  comment: {
+    type: String,
+    required: true,
+    trim: true,
+    minlength: 10,
+    validate: value => value.split(/\s+/).filter(word => /[\p{L}\p{N}]/u.test(word)).length >= 3
+  },
+  adjustedAt: { type: Date, default: Date.now }
+}, { _id: false });
+
 const bookSchema = new mongoose.Schema({
   id: {
     type: String,
@@ -24,6 +37,7 @@ const bookSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  stockAdjustments: { type: [stockAdjustmentSchema], default: undefined },
   location: String,
   price: {
     type: Number,

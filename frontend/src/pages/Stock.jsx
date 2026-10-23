@@ -53,7 +53,7 @@ export default function Stock() {
         setIsbnToLookup(cleanSearch);
       }
     }
-  }, [searchQuery, allStock]);
+  }, [allStock, cleanSearch, isISBN]);
 
   // When lookup returns a result from external API, select it
   useEffect(() => {
@@ -76,31 +76,6 @@ export default function Stock() {
     }
     setLocationError("");
   }, [selectedBook]);
-
-  // Infinite scroll observer
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (
-          entries[0].isIntersecting &&
-          displayedStock.length < filteredStock.length
-        ) {
-          setPage((prev) => prev + 1);
-        }
-      },
-      { threshold: 1 },
-    );
-
-    if (observerTarget.current) {
-      observer.observe(observerTarget.current);
-    }
-
-    return () => {
-      if (observerTarget.current) {
-        observer.unobserve(observerTarget.current);
-      }
-    };
-  }, [allStock, page]);
 
   const validateLocation = (loc) => {
     const regex = /^[A-Z0-9]-[A-Z0-9]-[A-Z0-9]$/i;
@@ -250,6 +225,31 @@ export default function Stock() {
   });
 
   const displayedStock = filteredStock.slice(0, page * ITEMS_PER_PAGE);
+
+  // Reconnect when filtering or pagination changes the scroll target or counts.
+  useEffect(() => {
+    const target = observerTarget.current;
+    if (
+      isLoadingStock ||
+      isStockError ||
+      !target ||
+      displayedStock.length >= filteredStock.length
+    ) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setPage((prev) => prev + 1);
+        }
+      },
+      { threshold: 1 },
+    );
+
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [displayedStock.length, filteredStock.length, isLoadingStock, isStockError]);
 
   if (isLoadingStock) {
     return (

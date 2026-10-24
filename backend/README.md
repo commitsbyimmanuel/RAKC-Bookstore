@@ -156,17 +156,18 @@ This backend forwards sign-in and password-change requests to that authority and
 keeps the signed session credential in an HttpOnly, host-only cookie. Session
 credentials are never returned to browser JavaScript or stored in localStorage.
 Every books, sales, requests, and directory request validates the live session and
-the current explicit `bookstorePos: ["access"]` grant through
+the current `bookstorePos` permission through
 `GET /api/bookstore/access`. An unavailable authority returns 503 and blocks data
 access. There is no offline access mode or cached authorization grant.
 
 In Admin Console > Access Management > Groups, set **Bookstore POS access** to
 **Grant** for an intended group and save. Assign the intended users to that group.
-All existing groups initially show **Deny**, including the system Admin group.
-Owners and admins must also belong to an explicitly granting group. Group grants
-combine: Deny contributes no POS permission; any assigned granting group allows
-access. Removing the last grant or the user's membership blocks their next API
-request. Admin Console Books reporting permission remains independent.
+The system Admin group has full access to every module and the Bookstore POS,
+including the owner account. Other groups default to **Deny**. For non-admin
+users, group grants combine: Deny contributes no POS permission; any assigned
+granting group allows access. Removing the last grant or the user's membership
+blocks their next API request unless they are still an admin. Admin Console
+Books reporting permission remains independent for non-admin users.
 
 The local Ubuntu workstation uses the hosts-file entry `127.0.0.1 bookstore.local`
 and opens `http://bookstore.local`. Compose binds the frontend to `127.0.0.1:80`

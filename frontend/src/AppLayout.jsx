@@ -27,13 +27,11 @@ function AppLayout() {
       x: dir > 0 ? distance : -distance,
       opacity: 0, // new page starts hidden
       position: "relative",
-      zIndex: 0,
     }),
     animate: {
       x: 0,
       opacity: 1, // fade + pan IN
       position: "relative",
-      zIndex: 0,
       transition: {
         x: { duration: 0.28, ease: [0.22, 1, 0.36, 1] },
         opacity: { duration: 0.2, ease: "linear" },
@@ -60,15 +58,16 @@ function AppLayout() {
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: "url('/desert2.jpg')" }}
         />
-        //Overlay to make the whole screen darker
+        {/* Overlay to make the whole screen darker */}
         <div className="absolute inset-0 bg-black/10" />
       </div>
 
       {/* Foreground */}
       <div className="relative z-10 mx-auto flex max-w-7xl flex-col gap-6 p-4 md:p-8">
         <NavBar />
-        {/* Static mask preserves height & clips edges */}
-        <div className="relative overflow-hidden">
+        {/* Blur only the background layer, never the interactive content. */}
+        <div className="relative z-30 isolate overflow-hidden rounded-3xl border border-white/20 shadow-2xl">
+          <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-0 bg-black/50 backdrop-blur-2xl" />
           <AnimatePresence mode="wait" initial={false} custom={direction}>
             <Motion.div
               key={location.key} // ⬅️ critical for exit to run
@@ -77,11 +76,7 @@ function AppLayout() {
               initial="initial"
               animate="animate"
               exit="exit"
-              className="mx-auto w-full border border-white/20 bg-black/50 shadow-2xl backdrop-blur-2xl"
-              style={{
-                borderRadius: "1.5rem",
-                willChange: "transform, opacity",
-              }}
+              className="relative z-10 mx-auto w-full"
             >
               <main className="p-5 md:p-8 min-h-[450px]">
                 <Outlet context={direction} />

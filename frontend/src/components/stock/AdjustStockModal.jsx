@@ -1,11 +1,16 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useAuth } from "../../auth/auth-context";
+
+const stepperButtonClass = "flex h-11 w-11 shrink-0 select-none items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white/70 transition-colors hover:border-orange-400/30 hover:bg-orange-500/15 hover:text-orange-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-orange-400/60 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:border-white/10 disabled:hover:bg-white/5 disabled:hover:text-white/70";
 
 export default function AdjustStockModal({ book, onClose, onSubmit, isSaving }) {
+  const { user } = useAuth();
   const [newStock, setNewStock] = useState(String(book.stock ?? 0));
   const [comment, setComment] = useState("");
   const [error, setError] = useState("");
   const dialogRef = useRef(null);
+  const stockInputRef = useRef(null);
   const id = useId();
 
   const normalizedComment = comment.trim().replace(/\s+/g, " ");
@@ -17,10 +22,17 @@ export default function AdjustStockModal({ book, onClose, onSubmit, isSaving }) 
   const isValidComment = normalizedComment.length >= 10 && wordCount >= 3;
   const canSubmit = isValidStock && isValidComment && !isSaving;
 
+  const stepStock = (amount) => {
+    if (isSaving || !isValidStock) return;
+    setNewStock(String(Math.max(0, Math.min(Number.MAX_SAFE_INTEGER, stock + amount))));
+    setError("");
+  };
+
   useEffect(() => {
     const dialog = dialogRef.current;
     const previousFocus = document.activeElement;
     dialog.showModal();
+    stockInputRef.current.focus();
     return () => {
       dialog.close();
       if (previousFocus instanceof HTMLElement && previousFocus.isConnected) {
@@ -63,21 +75,47 @@ export default function AdjustStockModal({ book, onClose, onSubmit, isSaving }) 
           <label htmlFor={`${id}-stock`} className="mb-2 block text-sm text-white/70">
             New stock
           </label>
-          <input
-            id={`${id}-stock`}
-            type="number"
-            min="0"
-            step="1"
-            required
-            autoFocus
-            value={newStock}
-            disabled={isSaving}
-            onChange={(event) => {
-              setNewStock(event.target.value);
-              setError("");
-            }}
-            className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-white/20"
-          />
+          <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-1.5 focus-within:ring-2 focus-within:ring-white/20">
+            <button
+              type="button"
+              aria-label="Decrease stock"
+              onClick={() => stepStock(-1)}
+              disabled={isSaving || !isValidStock || stock === 0}
+              className={stepperButtonClass}
+            >
+              <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                <path d="M5 12h14" />
+              </svg>
+            </button>
+            <input
+              ref={stockInputRef}
+              id={`${id}-stock`}
+              type="number"
+              inputMode="numeric"
+              min="0"
+              max={Number.MAX_SAFE_INTEGER}
+              step="1"
+              required
+              value={newStock}
+              disabled={isSaving}
+              onChange={(event) => {
+                setNewStock(event.target.value);
+                setError("");
+              }}
+              className="min-w-0 flex-1 bg-transparent py-2 text-center text-xl font-semibold tabular-nums text-white focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            />
+            <button
+              type="button"
+              aria-label="Increase stock"
+              onClick={() => stepStock(1)}
+              disabled={isSaving || !isValidStock || stock === Number.MAX_SAFE_INTEGER}
+              className={stepperButtonClass}
+            >
+              <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                <path d="M5 12h14M12 5v14" />
+              </svg>
+            </button>
+          </div>
         </div>
         <div>
           <label htmlFor={`${id}-comment`} className="mb-2 block text-sm text-white/70">
@@ -120,6 +158,9 @@ export default function AdjustStockModal({ book, onClose, onSubmit, isSaving }) 
             {isSaving ? "Adjusting..." : "Save adjustment"}
           </button>
         </div>
+        <p className="text-center text-xs leading-relaxed text-white/50">
+          This adjustment will be logged by &apos;<span className="font-medium text-white/80">{user?.name || user?.email}</span>&apos;.
+        </p>
       </form>
     </dialog>,
     document.body,

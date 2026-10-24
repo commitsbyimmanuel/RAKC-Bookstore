@@ -80,8 +80,14 @@ All endpoints support standard RESTful operations:
 - `POST /books` - Create new book
 - `PUT /books/:id` - Full update
 - `PATCH /books/:id` - Partial update
-- `POST /books/:id/adjust-stock` - Set the exact nonnegative integer stock count. Body: `{ "stock": 3, "comment": "Corrected after physical count" }`. Comments require at least 10 characters and 3 words after normalizing whitespace. Appends the previous count, new count, comment, and timestamp to the book's `stockAdjustments` history in the same update. Returns 409 if stock changes during the update.
+- `POST /books/:id/adjust-stock` - Set the exact nonnegative integer stock count. Body: `{ "stock": 3, "comment": "Corrected after physical count" }`. Comments require at least 10 characters and 3 words after normalizing whitespace. A database transaction updates stock, appends the book's `stockAdjustments` history, and inserts an `auditLogs` event. Returns 409 if stock changes during the update. An audit failure aborts the transaction.
 - `DELETE /books/:id` - Delete book
+
+### Stock adjustment audit trail
+
+New adjustments write to `rakc-platform.auditLogs` with `domain: "bookstore"`, `type: "stock-adjustment"`, ISBN, book ID/title, verified user ID/name/email, server timestamp, old/new quantities, and comment. The embedded history includes the corresponding audit log ID. The request cannot override the user, domain, timestamp, or previous quantity.
+
+This requires a database supporting multi-document transactions (the shared Firestore MongoDB-compatible database, or a MongoDB replica set for local development). Before rollout, run `npm run indexes:bookstore-audit -- --apply` in the Admin Console repository to provision the collection and its filter/cursor indexes. The command without `--apply` is a dry run. Audit events are append-only; the Admin Console exposes only `GET /api/books/audit-logs` with Books read permission and the `/books/audit-logs` page. Earlier embedded history is retained and is not backfilled into the new collection.
 
 ### Payments (`/payments`)
 - `GET /payments` - List all payments

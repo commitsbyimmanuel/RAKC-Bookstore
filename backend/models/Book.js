@@ -3,6 +3,7 @@ import { nanoid } from 'nanoid';
 import { actorSchema } from '../utils/actor.js';
 
 const stockAdjustmentSchema = new mongoose.Schema({
+  auditLogId: String,
   previousStock: { type: Number, required: true },
   newStock: { type: Number, required: true, min: 0, validate: Number.isSafeInteger },
   comment: {

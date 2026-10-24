@@ -1,6 +1,7 @@
 import express from 'express';
 import { actorFor } from '../utils/actor.js';
 import Book from '../models/Book.js';
+import AuditLog from '../models/AuditLog.js';
 
 const router = express.Router();
 
@@ -92,34 +93,52 @@ router.post('/:id/adjust-stock', async (req, res) => {
   }
 
   try {
+    const user = actorFor(req);
+    if (!user?.userId) return res.status(401).json({ error: 'Authentication required.' });
     const currentBook = await Book.findOne({ id: req.params.id });
     if (!currentBook) {
       return res.status(404).json({ error: 'Book not found' });
     }
 
-    const book = await Book.findOneAndUpdate(
-      { id: req.params.id, stock: currentBook.stock },
-      {
-        $set: { stock },
-        $push: {
-          stockAdjustments: {
-            previousStock: currentBook.stock,
-            newStock: stock,
-            comment: normalizedComment,
-            adjustedAt: new Date(),
-            adjustedBy: actorFor(req)
-          }
-        }
-      },
-      { new: true, runValidators: true }
-    ).select('-_id -__v');
-
-    if (!book) {
-      return res.status(409).json({ error: 'Stock changed while saving. Please try again.' });
+    const audit = new AuditLog({
+      domain: 'bookstore', type: 'stock-adjustment',
+      isbn: String(currentBook.isbn).replace(/[-\s]/g, '').toUpperCase(), bookId: currentBook.id, bookTitle: currentBook.title,
+      user: { ...user, email: user.email?.trim().toLowerCase() }, timestamp: new Date(), oldQuantity: currentBook.stock,
+      newQuantity: stock, comment: normalizedComment,
+    });
+    const session = await Book.startSession();
+    let book;
+    try {
+      book = await session.withTransaction(async () => {
+        const updated = await Book.findOneAndUpdate(
+          { id: req.params.id, stock: currentBook.stock },
+          {
+            $set: { stock },
+            $push: {
+              stockAdjustments: {
+                auditLogId: String(audit._id),
+                previousStock: currentBook.stock,
+                newStock: stock,
+                comment: normalizedComment,
+                adjustedAt: audit.timestamp,
+                adjustedBy: user,
+              },
+            },
+          },
+          { new: true, runValidators: true, session },
+        ).select('-_id -__v');
+        if (!updated) throw Object.assign(new Error('Stock changed while saving. Please try again.'), { status: 409 });
+        // A failed audit insert rolls back the stock and embedded history too.
+        await AuditLog.create([audit.toObject()], { session });
+        return updated;
+      });
+    } finally {
+      await session.endSession();
     }
     res.json(book);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    if (!error.status) console.error('Stock adjustment transaction failed', { name: error.name, code: error.code });
+    res.status(error.status || 500).json({ error: error.status ? error.message : 'Unable to save the stock adjustment. Refresh stock before retrying.' });
   }
 });
 

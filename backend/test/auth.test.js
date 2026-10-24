@@ -3,6 +3,7 @@ import { after, before, beforeEach, test } from 'node:test';
 import { createApp } from '../app.js';
 import Book from '../models/Book.js';
 import Sale from '../models/Sale.js';
+import AuditLog from '../models/AuditLog.js';
 
 let server;
 let url;
@@ -107,7 +108,10 @@ test('sale attribution comes from the verified account instead of client fields'
 });
 
 test('stock adjustment history records the verified account', async t => {
-  t.mock.method(Book, 'findOne', async () => ({ stock: 3 }));
+  const session = { withTransaction: async callback => callback(), endSession: async () => {} };
+  t.mock.method(Book, 'startSession', async () => session);
+  const audit = t.mock.method(AuditLog, 'create', async () => []);
+  t.mock.method(Book, 'findOne', async () => ({ id: 'fixture', isbn: '9780000000001', title: 'Fixture Book', stock: 3 }));
   t.mock.method(Book, 'findOneAndUpdate', (filter, changes) => ({
     select: async () => ({ stock: changes.$set.stock, stockAdjustments: [changes.$push.stockAdjustments] }),
   }));
@@ -116,6 +120,7 @@ test('stock adjustment history records the verified account', async t => {
   }, sessionCookie);
   assert.equal(response.status, 200);
   assert.equal((await response.json()).stockAdjustments[0].adjustedBy.userId, access.user.id);
+  assert.equal(audit.mock.calls[0].arguments[0][0].user.userId, access.user.id);
 });
 
 test('temporary passwords cannot access data and can be changed with the same account', async () => {

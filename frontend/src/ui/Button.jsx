@@ -1,5 +1,5 @@
 export default function Button({ children, onClick, disabled, className, variant = "default" }) {
-  const baseStyles = "rounded-2xl h-[50px] active:scale-95 shadow-md/15 duration-300 transition-all font-semibold";
+  const baseStyles = "rounded-2xl h-[50px] shadow-md/15 duration-200 transition-colors font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/50";
   
   const variants = {
     default: "border border-white/20 bg-white/5 hover:bg-white/20 text-white",

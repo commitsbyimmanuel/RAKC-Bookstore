@@ -172,8 +172,11 @@ export function createBookstoreAuth({
       }
       const response = await callAuthority('/api/account/change-temporary-password', { token, body: { currentPassword, newPassword } });
       if (!response.ok) throw new AuthError(response.status >= 500 ? 503 : 400, 'PASSWORD_CHANGE_FAILED', 'The password could not be changed. Check your current password and retry.');
-      const refreshed = await accessFor(token);
+      const refreshedToken = response.headers.get('set-auth-token');
+      if (!refreshedToken || refreshedToken.length > 4096) throw new AuthError(503, 'AUTH_UNAVAILABLE', 'The authentication service did not return a valid session.');
+      const refreshed = await accessFor(refreshedToken);
       assertGrant(refreshed);
+      res.cookie(cookieName, refreshedToken, { ...cookieOptions, expires: new Date(refreshed.expiresAt) });
       return res.json(publicSession(refreshed));
     } catch (error) { return fail(res, error); }
   });

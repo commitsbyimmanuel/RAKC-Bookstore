@@ -1,14 +1,15 @@
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { useBookLookup, useGlobalBookSearch } from "../hooks/useBookLookup";
+import { activeBookSearchQuery, useBookLookup, useGlobalBookSearch } from "../hooks/useBookLookup";
 import { useCreateBookRequest, useSearchLocalBooks } from "../services/localAPI";
+import { bookEditionLabel, isAudioBook } from "../services/bookMetadata.js";
 
 function SourceBadge({ source }) {
   const colors = {
     local: "bg-green-600",
     google_books: "bg-blue-600",
     open_library: "bg-purple-600",
-  };``
+  };
 
   const labels = {
     local: "In Stock",
@@ -23,7 +24,7 @@ function SourceBadge({ source }) {
   );
 }
 
-function AddRequestModal({ book, isOpen, onClose, onSubmit, isSubmitting }) {
+function AddRequestModal({ book, isOpen, onClose, onSubmit, isSubmitting, error }) {
   const [requesterName, setRequesterName] = useState("");
 
   if (!isOpen) return null;
@@ -62,6 +63,7 @@ function AddRequestModal({ book, isOpen, onClose, onSubmit, isSubmitting }) {
           <div className="flex-1">
             <h3 className="font-medium text-white">{book.title}</h3>
             <p className="text-sm text-white/60">{book.authors?.join(", ")}</p>
+            <p className="text-xs text-white/50 mt-1">{bookEditionLabel(book)}</p>
             <p className="text-xs text-white/40 mt-1">ISBN: {book.isbn}</p>
           </div>
         </div>
@@ -81,6 +83,8 @@ function AddRequestModal({ book, isOpen, onClose, onSubmit, isSubmitting }) {
             autoFocus
           />
           
+          {error && <p role="alert" className="mb-4 text-sm text-red-300">{error}</p>}
+
           <div className="flex gap-3">
             <button
               type="button"
@@ -141,9 +145,11 @@ function BookCard({ book, onAddRequest }) {
         <p className="text-sm text-white/80 mt-1">
           {book.authors?.join(", ")}
         </p>
+        <p className="text-xs text-white/60 mt-1">{bookEditionLabel(book)}</p>
+        <p className="text-xs text-white/40 mt-1">ISBN: {book.isbn}</p>
         {book.publisher && (
           <p className="text-xs text-white/50 mt-1">
-            {book.publisher} • {book.publishedDate}
+            {book.publisher}
           </p>
         )}
         
@@ -187,6 +193,7 @@ function BookCard({ book, onAddRequest }) {
 export default function CheckAvailability() {
   const [isbn, setIsbn] = useState("");
   const [searchISBN, setSearchISBN] = useState("");
+  const [selectedBook, setSelectedBook] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [showBookDropdown, setShowBookDropdown] = useState(false);
   const [bookSearchQuery, setBookSearchQuery] = useState("");
@@ -197,15 +204,27 @@ export default function CheckAvailability() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDebouncedQuery(bookSearchQuery);
+      setDebouncedQuery(bookSearchQuery.trim());
     }, 500);
     return () => clearTimeout(timer);
   }, [bookSearchQuery]);
 
-  const { data: book, isLoading, isError, error } = useBookLookup(searchISBN);
+  const { data: lookupBook, isLoading, isError, error } = useBookLookup(searchISBN);
+  const matchedBook = lookupBook ? {
+    ...selectedBook,
+    ...lookupBook,
+    format: lookupBook.format || selectedBook?.format,
+    edition: lookupBook.edition || selectedBook?.edition,
+  } : selectedBook;
+  const book = matchedBook && !isAudioBook(matchedBook) ? matchedBook : null;
   const createRequestMutation = useCreateBookRequest();
-  const { data: bookSearchResults = [] } = useSearchLocalBooks(debouncedQuery);
-  const { data: globalSearchResults = [], isFetching: isFetchingGlobal } = useGlobalBookSearch(debouncedQuery);
+  const isDebouncing = bookSearchQuery.trim() !== debouncedQuery;
+  const activeQuery = activeBookSearchQuery(bookSearchQuery, debouncedQuery);
+  const { data: localResults = [], isFetching: isFetchingLocal, isError: isLocalError } = useSearchLocalBooks(activeQuery);
+  const { data: globalResults = [], isFetching: isFetchingGlobal, isError: isGlobalError } = useGlobalBookSearch(activeQuery);
+  const bookSearchResults = isDebouncing ? [] : localResults.filter(result => !isAudioBook(result));
+  const globalSearchResults = isDebouncing ? [] : globalResults;
+  const isSearching = isDebouncing || isFetchingLocal || isFetchingGlobal;
 
   // Close dropdown when clicking outside, and manage dropdown placement
   useEffect(() => {
@@ -242,7 +261,7 @@ export default function CheckAvailability() {
         window.removeEventListener("resize", updateRect);
       };
     }
-  }, [showBookDropdown, bookSearchResults, globalSearchResults]);
+  }, [showBookDropdown]);
 
   // Auto-search when ISBN reaches 13 digits
   useEffect(() => {
@@ -255,10 +274,15 @@ export default function CheckAvailability() {
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
-      const cleanISBN = isbn.replace(/[-\s]/g, "");
-      if (cleanISBN.length >= 10 && /^\d+$/.test(cleanISBN)) {
+      e.preventDefault();
+      const cleanISBN = isbn.replace(/[-\s]/g, "").toUpperCase();
+      if (/^(\d{13}|\d{9}[\dX])$/.test(cleanISBN)) {
         setSearchISBN(cleanISBN);
+        setBookSearchQuery("");
         setShowBookDropdown(false);
+      } else if (isbn.trim()) {
+        setDebouncedQuery(isbn.trim());
+        setShowBookDropdown(true);
       }
     }
   };
@@ -266,11 +290,23 @@ export default function CheckAvailability() {
   const handleClear = () => {
     setIsbn("");
     setSearchISBN("");
+    setSelectedBook(null);
     setBookSearchQuery("");
+    setDebouncedQuery("");
     setShowBookDropdown(false);
   };
 
+  const handleSelectBook = (result) => {
+    setSelectedBook(result);
+    setIsbn(result.isbn);
+    setSearchISBN(result.isbn);
+    setShowBookDropdown(false);
+    setBookSearchQuery("");
+    setDebouncedQuery("");
+  };
+
   const handleAddRequest = () => {
+    createRequestMutation.reset();
     setShowModal(true);
   };
 
@@ -293,22 +329,29 @@ export default function CheckAvailability() {
       <h3 className="text-sm text-white/80 mb-3">Check Availability</h3>
       
       <div className="flex gap-2" ref={bookSearchRef}>
-        <div className="relative flex-1">
+        <div className="relative flex-1 min-w-0">
           <input
             type="text"
             value={isbn}
             onChange={(e) => {
               const val = e.target.value;
               setIsbn(val);
+              setSearchISBN("");
+              setSelectedBook(null);
               const cleanVal = val.replace(/[-\s]/g, "");
               if (cleanVal.length !== 13 || !/^\d+$/.test(cleanVal)) {
                 setBookSearchQuery(val);
-                setShowBookDropdown(val.length > 0);
+                setShowBookDropdown(val.trim().length > 0);
               } else {
+                setBookSearchQuery("");
                 setShowBookDropdown(false);
               }
             }}
+            onFocus={() => {
+              if (bookSearchQuery.trim()) setShowBookDropdown(true);
+            }}
             onKeyDown={handleKeyDown}
+            aria-label="Search books by title, author or ISBN"
             placeholder="Scan ISBN or search title/author..."
             className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 
                        placeholder:text-white/40 focus:outline-none focus:ring-2 
@@ -317,7 +360,7 @@ export default function CheckAvailability() {
           />
 
           {/* Book Search Results Dropdown - Portaled */}
-          {showBookDropdown && dropdownRect && (bookSearchResults.length > 0 || globalSearchResults.length > 0 || isFetchingGlobal) && createPortal(
+          {showBookDropdown && dropdownRect && createPortal(
             <div 
               id="dropdown-portal-root"
               className="fixed z-[9999] bg-black/95 backdrop-blur-xl border border-white/20 rounded-xl shadow-2xl overflow-hidden"
@@ -335,12 +378,7 @@ export default function CheckAvailability() {
                 {bookSearchResults.map((b) => (
                   <button
                     key={b.isbn}
-                    onClick={() => {
-                      setIsbn(b.isbn);
-                      setSearchISBN(b.isbn);
-                      setShowBookDropdown(false);
-                      setBookSearchQuery("");
-                    }}
+                    onClick={() => handleSelectBook({ ...b, source: "local" })}
                     className="w-full px-4 py-3 text-left hover:bg-white/10 transition-colors border-b border-white/5 last:border-b-0 flex items-center gap-3"
                   >
                     {b.coverUrl ? (
@@ -353,6 +391,8 @@ export default function CheckAvailability() {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-white font-medium truncate">{b.title}</p>
                       <p className="text-xs text-white/60 mt-1 truncate">{b.authors?.join(", ")}</p>
+                      <p className="text-xs text-white/50 mt-1">{bookEditionLabel(b)}</p>
+                      <p className="text-[10px] text-white/40 mt-1">ISBN: {b.isbn}</p>
                     </div>
                     <div className="text-right">
                       <p className={`text-xs ${b.stock > 0 ? "text-green-400" : "text-red-400"}`}>
@@ -364,17 +404,12 @@ export default function CheckAvailability() {
 
                 {/* Global Results */}
                 {globalSearchResults.filter(b => b.isbn).length > 0 && (
-                  <div className="px-4 py-2 text-[10px] font-bold text-blue-400/60 uppercase tracking-widest bg-blue-500/5 mt-1 border-y border-white/5">Internet Search</div>
+                  <div className="px-4 py-2 text-[10px] font-bold text-blue-400/60 uppercase tracking-widest bg-blue-500/5 mt-1 border-y border-white/5">Internet Search · Latest Editions</div>
                 )}
                 {globalSearchResults.filter(b => b.isbn).map((b) => (
                   <button
                     key={b.isbn}
-                    onClick={() => {
-                      setIsbn(b.isbn);
-                      setSearchISBN(b.isbn);
-                      setShowBookDropdown(false);
-                      setBookSearchQuery("");
-                    }}
+                    onClick={() => handleSelectBook(b)}
                     className="w-full px-4 py-3 text-left hover:bg-blue-500/10 transition-colors border-b border-white/5 last:border-b-0 flex items-center gap-3"
                   >
                     {b.coverUrl ? (
@@ -387,6 +422,8 @@ export default function CheckAvailability() {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-blue-100 font-medium truncate">{b.title}</p>
                       <p className="text-xs text-blue-100/60 mt-1 truncate">{b.authors?.join(", ")}</p>
+                      <p className="text-xs text-blue-100/50 mt-1">{bookEditionLabel(b)}</p>
+                      <p className="text-[10px] text-white/40 mt-1">ISBN: {b.isbn}</p>
                     </div>
                     <div className="text-right flex flex-col items-end gap-1">
                        <span className={`text-[10px] uppercase font-bold tracking-tighter px-2 py-1 rounded-md ${
@@ -398,11 +435,24 @@ export default function CheckAvailability() {
                   </button>
                 ))}
 
-                {isFetchingGlobal && (
-                  <div className="p-4 flex items-center justify-center gap-2 text-white/40">
+                {isSearching && (
+                  <div role="status" className="p-4 flex items-center justify-center gap-2 text-white/40">
                     <div className="w-3 h-3 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                    <span className="text-xs">Searching internet...</span>
+                    <span className="text-xs">Searching books...</span>
                   </div>
+                )}
+                {!isSearching && isLocalError && (
+                  <p role="alert" className="p-4 text-xs text-amber-300">Unable to search local inventory. Please try again.</p>
+                )}
+                {!isSearching && isGlobalError && (
+                  <p role="alert" className="p-4 text-xs text-amber-300">Internet book search is unavailable. Please try again shortly.</p>
+                )}
+                {!isSearching && bookSearchResults.length === 0 && globalSearchResults.length === 0 && !isLocalError && !isGlobalError && (
+                  <p role="status" className="p-4 text-sm text-white/60">
+                    {debouncedQuery.length < 3
+                      ? "Type at least 3 characters to search online by title or author."
+                      : "No books found. Try another title, author or ISBN."}
+                  </p>
                 )}
               </div>
             </div>,
@@ -421,7 +471,7 @@ export default function CheckAvailability() {
       </div>
 
       <p className="text-xs text-white/40 mt-2">
-        Auto-searches on 13 digits • Press Enter for shorter ISBNs
+        Search by title or author (3+ characters), or scan an ISBN. Press Enter to search now.
       </p>
 
       {/* Loading State */}
@@ -433,7 +483,7 @@ export default function CheckAvailability() {
       )}
 
       {/* Error State */}
-      {isError && (
+      {isError && !book && (
         <div className="mt-4 p-3 rounded-xl bg-red-500/20 border border-red-500/30 text-red-300">
           {error?.message || "Failed to lookup book"}
         </div>
@@ -464,6 +514,7 @@ export default function CheckAvailability() {
           onClose={() => setShowModal(false)}
           onSubmit={handleSubmitRequest}
           isSubmitting={createRequestMutation.isPending}
+          error={createRequestMutation.error?.message}
         />
       )}
     </div>

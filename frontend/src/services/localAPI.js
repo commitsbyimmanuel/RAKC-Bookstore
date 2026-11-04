@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { API_URL, apiFetch } from "./apiClient";
+import { API_URL, apiFetch } from "./apiClient.js";
 
 const LOCAL_API_URL = API_URL;
 
@@ -76,27 +76,34 @@ export function useBooks() {
 /**
  * Search local books by query (title, author, isbn)
  */
-export async function searchLocalBooks(query) {
+export async function searchLocalBooks(query, signal) {
   if (!query || query.trim().length === 0) {
     return [];
   }
-  const response = await apiFetch(`${LOCAL_API_URL}/books?search=${encodeURIComponent(query)}`);
+  signal?.throwIfAborted();
+  const response = await apiFetch(`${LOCAL_API_URL}/books?search=${encodeURIComponent(query)}`, { signal });
   if (!response.ok) {
     throw new Error("Failed to search books");
   }
-  return response.json();
+  const books = await response.json();
+  signal?.throwIfAborted();
+  return books;
 }
 
 /**
  * Hook to search local books
  */
-export function useSearchLocalBooks(query) {
-  return useQuery({
+export function localBookSearchQueryOptions(query) {
+  return {
     queryKey: ["booksSearch", query],
-    queryFn: () => searchLocalBooks(query),
+    queryFn: ({ signal }) => searchLocalBooks(query, signal),
     enabled: !!query && query.trim().length > 0,
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
-  });
+  };
+}
+
+export function useSearchLocalBooks(query) {
+  return useQuery(localBookSearchQueryOptions(query));
 }
 
 /**

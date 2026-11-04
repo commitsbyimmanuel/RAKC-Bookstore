@@ -12,7 +12,10 @@ let upstreamStatus;
 let outage;
 let calls;
 let clock;
+let activeToken;
+let passwordToken;
 const token = 'signed-session.signature';
+const replacementToken = 'replacement-session.signature';
 const browserHeaders = { Origin: 'http://localhost:5173', 'X-Bookstore-Request': '1', 'Content-Type': 'application/json' };
 const sessionCookie = `bookstore-session=${encodeURIComponent(token)}`;
 
@@ -22,9 +25,15 @@ async function authorityFetch(input, options) {
   if (input.endsWith('/api/auth/sign-in/email')) {
     return new Response('{}', { status: upstreamStatus, headers: upstreamStatus === 200 ? { 'set-auth-token': token } : {} });
   }
-  assert.equal(options.headers.Authorization, `Bearer ${token}`);
+  if (options.headers.Authorization !== `Bearer ${activeToken}`) {
+    return Response.json({ error: 'Session revoked' }, { status: 401 });
+  }
   if (input.endsWith('/api/bookstore/access')) return Response.json(access, { status: upstreamStatus });
-  if (input.endsWith('/api/account/change-temporary-password')) access.mustChangePassword = false;
+  if (input.endsWith('/api/account/change-temporary-password')) {
+    access.mustChangePassword = false;
+    activeToken = replacementToken;
+    return Response.json({ success: true }, { headers: passwordToken ? { 'set-auth-token': passwordToken } : {} });
+  }
   return Response.json({ success: true });
 }
 
@@ -44,6 +53,8 @@ beforeEach(() => {
   upstreamStatus = 200;
   outage = false;
   calls = [];
+  activeToken = token;
+  passwordToken = replacementToken;
 });
 
 function post(path, body, cookie = undefined, headers = browserHeaders) {
@@ -123,7 +134,7 @@ test('stock adjustment history records the verified account', async t => {
   assert.equal(audit.mock.calls[0].arguments[0][0].user.userId, access.user.id);
 });
 
-test('temporary passwords cannot access data and can be changed with the same account', async () => {
+test('temporary passwords cannot access data and password changes replace the revoked session', async () => {
   access.mustChangePassword = true;
   const options = { headers: { Cookie: sessionCookie } };
   const blocked = await fetch(`${url}/books`, options);
@@ -132,6 +143,21 @@ test('temporary passwords cannot access data and can be changed with the same ac
   const response = await post('/auth/change-password', { currentPassword: 'temporary', newPassword: 'changed-password' }, sessionCookie);
   assert.equal(response.status, 200);
   assert.equal((await response.json()).mustChangePassword, false);
+  const replacementCookie = response.headers.get('set-cookie');
+  assert.match(replacementCookie, /bookstore-session=replacement-session.signature/);
+  assert.match(replacementCookie, /HttpOnly/);
+  assert.equal((await fetch(`${url}/auth/session`, { headers: { Cookie: replacementCookie.split(';')[0] } })).status, 200);
+  assert.equal((await fetch(`${url}/auth/session`, options)).status, 401);
+});
+
+test('password changes require a valid replacement credential from the issuer', async () => {
+  for (const value of [null, 'x'.repeat(4097)]) {
+    activeToken = token;
+    passwordToken = value;
+    const response = await post('/auth/change-password', { currentPassword: 'temporary', newPassword: 'changed-password' }, sessionCookie);
+    assert.equal(response.status, 503);
+    assert.equal((await response.json()).code, 'AUTH_UNAVAILABLE');
+  }
 });
 
 test('invalid, expired and revoked sessions are rejected', async () => {

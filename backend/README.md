@@ -223,6 +223,46 @@ For development, run the backend with its `.env.local` settings from
 `.env.example`; Vite proxies `/api` to `http://localhost:3001` by default. Override
 `BOOKSTORE_API_UPSTREAM` in the frontend environment for another backend.
 
+### Inactivity timeout and diagnostics
+
+The Bookstore signs out a session after **3 hours without user interaction**.
+Keyboard input (including a barcode scanner), pointer activity, scrolling, and
+touch interactions count as activity. Session polling, background API requests,
+focus changes, and simply leaving a tab open do not extend the deadline. Tabs on
+the same origin share activity and sign-out notifications. Browser storage holds
+only a session identifier, timestamps, and sign-out state; no credentials are
+written there. Reloading or waking the PC does not restart an expired idle clock.
+
+The frontend reports actual activity during its existing periodic session check
+using `POST /api/auth/activity`. Interactions close to the server deadline trigger
+an earlier report. The backend enforces the deadline before verifying access or
+allowing protected routes, and cookie expiry is capped at that deadline. Only a
+successful login, password change, or activity report renews it. Access grants are
+still checked live on each protected request; no permission decisions are cached.
+
+Idle state is held in memory for the single backend process and stores only
+hashed session credentials and expiry metadata. Restarting/recreating the backend
+requires a fresh sign-in. Deploy the backend and frontend together for this change;
+existing sessions must sign in once after rollout. No Admin Console session policy
+or database schema changes are required.
+
+The backend emits structured JSON for **every failed HTTP request** and every
+successful request taking **more than 3500 ms**. The same rule covers outbound
+authentication-authority calls, including response-body parsing. Failures include
+HTTP errors, timeouts, transport errors, and invalid authority responses. Client
+cancellations are recorded as status `499` with `failureKind: "client_disconnected"`.
+The existing 8-second authentication request timeout remains in effect.
+
+Events `bookstore_http_request` and `bookstore_auth_authority_request` include a
+shared `requestId`, method, route/path, status, and duration. Each response includes
+`X-Request-Id`; authority calls receive `X-Bookstore-Request-Id`. Network failures
+also include a safe error type/code. Logs exclude credentials, passwords, request
+bodies, query values, email addresses, and raw exception messages.
+
+```sh
+docker logs --since 1h --timestamps rakc-backend
+```
+
 ### Google Books API key
 
 Set `GOOGLE_BOOKS_API_KEY` on the backend at runtime (`GOOGLE_BOOKS_API` is also

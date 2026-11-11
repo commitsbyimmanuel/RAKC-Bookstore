@@ -6,11 +6,13 @@ import bookRequestsRouter from './routes/bookRequests.js';
 import salesRouter from './routes/sales.js';
 import directoryRouter from './routes/directory.js';
 import { createGoogleBooksRouter } from './routes/googleBooks.js';
+import { createRequestDiagnostics } from './auth/requestDiagnostics.js';
 
 export function createApp(authOptions, googleBooksOptions) {
   const app = express();
   app.disable('x-powered-by');
   app.set('trust proxy', 1);
+  app.use(createRequestDiagnostics({ logger: authOptions?.logger, measureNow: authOptions?.measureNow }));
   app.use(express.json({ limit: '1mb' }));
   const auth = createBookstoreAuth(authOptions);
   app.use('/auth', auth.router);

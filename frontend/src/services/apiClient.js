@@ -7,7 +7,7 @@ export async function apiFetch(url, options = {}, { notify = true } = {}) {
   const response = await fetch(url, { ...options, headers, credentials: 'same-origin', cache: 'no-store' });
   if (notify && [401, 403].includes(response.status)) {
     const problem = await response.clone().json().catch(() => ({}));
-    if (['AUTHENTICATION_REQUIRED', 'BOOKSTORE_ACCESS_DENIED', 'PASSWORD_CHANGE_REQUIRED'].includes(problem.code)) {
+    if (['AUTHENTICATION_REQUIRED', 'SESSION_IDLE_EXPIRED', 'BOOKSTORE_ACCESS_DENIED', 'PASSWORD_CHANGE_REQUIRED'].includes(problem.code)) {
       window.dispatchEvent(new CustomEvent('bookstore:auth-error', { detail: problem }));
     }
   }

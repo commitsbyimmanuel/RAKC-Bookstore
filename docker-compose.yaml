@@ -18,7 +18,7 @@ services:
 
   # Backend API Service
   backend:
-    image: ghcr.io/commitsbyimmanuel/rakc-bookstore-backend:v2.0
+    image: ghcr.io/commitsbyimmanuel/rakc-bookstore-backend:v2.2
     build: ./backend
     container_name: rakc-backend
     restart: unless-stopped
@@ -37,7 +37,7 @@ services:
 
   # Frontend Web Application
   frontend:
-    image: ghcr.io/commitsbyimmanuel/rakc-bookstore-frontend:v2.1
+    image: ghcr.io/commitsbyimmanuel/rakc-bookstore-frontend:v2.2
     build: ./frontend
     container_name: rakc-frontend
     restart: unless-stopped

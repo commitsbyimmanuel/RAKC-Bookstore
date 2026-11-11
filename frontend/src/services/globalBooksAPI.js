@@ -2,7 +2,7 @@ import { API_URL, apiFetch } from "./apiClient.js";
 import { isAudioBook, latestBookEditions } from "./bookMetadata.js";
 
 const LOCAL_API_URL = API_URL;
-const GOOGLE_BOOKS_API_URL = "https://www.googleapis.com/books/v1/volumes";
+const GOOGLE_BOOKS_API_URL = `${API_URL}/books/google-search`;
 const OPEN_LIBRARY_API_URL = "https://openlibrary.org/api/books";
 const OPEN_LIBRARY_COVERS_URL = "https://covers.openlibrary.org/b/isbn";
 
@@ -142,7 +142,7 @@ async function searchLocalDB(isbn, signal) {
 async function searchGoogleBooks(isbn, signal) {
   try {
     signal?.throwIfAborted();
-    const response = await fetch(`${GOOGLE_BOOKS_API_URL}?q=isbn:${isbn}`, { signal });
+    const response = await apiFetch(`${GOOGLE_BOOKS_API_URL}?q=${encodeURIComponent(`isbn:${isbn}`)}&maxResults=10`, { signal });
     if (!response.ok) return null;
     
     const data = await response.json();
@@ -241,9 +241,9 @@ export async function searchGlobalBooksByQuery(query, signal) {
   const searchQuery = query?.trim();
   if (!searchQuery || searchQuery.length < 3) return [];
 
-  const fetchData = async (url) => {
+  const fetchData = async (url, fetchImpl = fetch) => {
     signal?.throwIfAborted();
-    const response = await fetch(url, { signal });
+    const response = await fetchImpl(url, { signal });
     if (!response.ok) throw new Error(`Book search failed (${response.status})`);
     const data = await response.json();
     signal?.throwIfAborted();
@@ -255,7 +255,7 @@ export async function searchGlobalBooksByQuery(query, signal) {
   // metadata in one batch instead of picking an arbitrary ISBN from each group.
   const fields = "key,title,author_name,isbn";
   const responses = await Promise.allSettled([
-    fetchData(`${GOOGLE_BOOKS_API_URL}?q=${encodeURIComponent(searchQuery)}&maxResults=8&printType=books`),
+    fetchData(`${GOOGLE_BOOKS_API_URL}?q=${encodeURIComponent(searchQuery)}&maxResults=8&printType=books`, apiFetch),
     fetchData(`https://openlibrary.org/search.json?q=${encodeURIComponent(searchQuery)}&limit=8&fields=${fields}`),
   ]);
 

@@ -223,6 +223,36 @@ For development, run the backend with its `.env.local` settings from
 `.env.example`; Vite proxies `/api` to `http://localhost:3001` by default. Override
 `BOOKSTORE_API_UPSTREAM` in the frontend environment for another backend.
 
+### Google Books API key
+
+Set `GOOGLE_BOOKS_API_KEY` on the backend at runtime (`GOOGLE_BOOKS_API` is also
+accepted as a fallback). Google title/author and ISBN
+requests use the authenticated `/api/books/google-search` proxy, which sends the
+key to Google in the `X-Goog-Api-Key` header. The key is not included in the
+frontend bundle or Docker images. Open Library remains available if Google
+returns an error. An unset key disables Google requests rather than making
+anonymous requests with zero quota.
+
+For local development, the backend loads `backend/.env.local`, repository-root
+`.env.local`, then repository-root `.env`. Existing process environment variables
+take precedence; the root files supply defaults without overriding backend settings.
+
+Compose reads its interpolation variables from the root `.env` by default. Put
+`GOOGLE_BOOKS_API_KEY` in the production server's `.env`, or explicitly load a root
+`.env.local` override while retaining the existing `.env` settings:
+
+```sh
+docker compose --env-file .env --env-file .env.local config --quiet
+docker compose --env-file .env --env-file .env.local up -d --no-deps backend frontend
+```
+
+Rebuild and publish both backend and frontend images for this change, then
+recreate both services. The server must receive its own runtime key; building
+and pushing an image does not transfer local environment files. Restrict the key
+to the Books API and verify that its Google Cloud project has available quota.
+Do not use `docker compose config` without `--quiet` when sharing output, because
+the resolved configuration includes credentials.
+
 ### Verification
 
 `npm test` exercises the actual Express application without a database, including

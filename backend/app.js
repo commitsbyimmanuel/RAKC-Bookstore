@@ -5,8 +5,9 @@ import booksRouter from './routes/books.js';
 import bookRequestsRouter from './routes/bookRequests.js';
 import salesRouter from './routes/sales.js';
 import directoryRouter from './routes/directory.js';
+import { createGoogleBooksRouter } from './routes/googleBooks.js';
 
-export function createApp(authOptions) {
+export function createApp(authOptions, googleBooksOptions) {
   const app = express();
   app.disable('x-powered-by');
   app.set('trust proxy', 1);
@@ -20,6 +21,7 @@ export function createApp(authOptions) {
   app.get('/', (req, res) => res.json({ message: 'RAKC Bookstore API' }));
   // Guard every business router, including direct requests that bypass the UI.
   app.use(['/books', '/bookRequests', '/sales', '/directory'], auth.requireAccess);
+  app.use('/books/google-search', createGoogleBooksRouter(googleBooksOptions));
   app.use('/books', booksRouter);
   app.use('/bookRequests', bookRequestsRouter);
   app.use('/sales', salesRouter);

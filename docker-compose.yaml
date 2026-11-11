@@ -30,6 +30,7 @@ services:
       - NODE_ENV=production
       - BOOKSTORE_AUTH_URL=${BOOKSTORE_AUTH_URL:-https://admin.rakchurch.com}
       - BOOKSTORE_PUBLIC_URL=${BOOKSTORE_PUBLIC_URL:-http://bookstore.local}
+      - GOOGLE_BOOKS_API_KEY=${GOOGLE_BOOKS_API_KEY}}
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
     networks:
       - rakc-network

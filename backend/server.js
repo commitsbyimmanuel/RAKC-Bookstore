@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+import { fileURLToPath } from 'node:url';
 import mongoose from 'mongoose';
 import { createApp } from './app.js';
 import {
@@ -6,8 +7,11 @@ import {
   connect as connectRabbitMQ
 } from './utils/rabbitmq.js';
 
-// Load environment variables
-dotenv.config({ path: '.env.local' });
+// Backend-local settings take precedence over the repository-root defaults.
+// Container environment variables take precedence over both files.
+dotenv.config({ path: fileURLToPath(new URL('.env.local', import.meta.url)) });
+dotenv.config({ path: fileURLToPath(new URL('../.env.local', import.meta.url)) });
+dotenv.config({ path: fileURLToPath(new URL('../.env', import.meta.url)) });
 
 const app = createApp();
 const PORT = process.env.PORT || 3001;
